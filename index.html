@@ -217,19 +217,25 @@
       border: 1px solid var(--border);
       color: var(--text);
       font-weight: 600;
-      padding: 8px 14px;
+      padding: 7px 12px;
       border-radius: 5px;
       cursor: pointer;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
     }
-    .btn-secondary:hover { border-color: var(--text-muted); }
+    .btn-secondary:hover { border-color: var(--accent); color: #fff; }
     .btn-danger {
       background: var(--danger);
       color: #fff;
       border: none;
-      padding: 8px 14px;
+      padding: 7px 12px;
       border-radius: 5px;
       cursor: pointer;
       font-weight: 600;
+      font-size: 12px;
     }
     .btn-danger:hover { background: var(--danger-hover); }
 
@@ -587,9 +593,16 @@
           <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="resetPawnForm()">
             ➕ 새 림(정착민) 추가
           </button>
-          <div style="font-size: 11.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
-            등록된 정착민 목록
+          
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
+              등록 정착민 (<span id="pawn-sidebar-count">0</span>)
+            </span>
+            <button class="btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="copyAllPawnsInfo()">
+              👥 전체 림 복사
+            </button>
           </div>
+
           <div class="pawn-list" id="pawnCardListTab1">
             <!-- 동적 렌더링 -->
           </div>
@@ -600,7 +613,8 @@
           <div class="editor-section-title">
             <span id="editorFormHeading">정착민 상세 정보 편집</span>
             <div style="display: flex; gap: 8px;">
-              <button class="btn-secondary" id="btnCopyPawn" onclick="copyCurrentPawnInfo()">📋 림 정보 복사</button>
+              <button class="btn-secondary" onclick="copyAllPawnsInfo()">👥 전체 림 복사</button>
+              <button class="btn-secondary" id="btnCopyPawn" onclick="copyCurrentPawnInfo()">📋 선택 림 복사</button>
               <button class="btn-danger" id="btnDeletePawn" style="display: none;" onclick="deleteCurrentPawn()">삭제</button>
               <button class="btn-primary" onclick="savePawn()">정착민 저장</button>
             </div>
@@ -758,14 +772,14 @@
             </div>
           </div>
 
-          <!-- 3. 누적 일지 로그 목록 + 우상단 전체 복사 버튼 -->
+          <!-- 3. 누적 일지 로그 목록 + 순수 일지만 전체 복사 버튼 -->
           <div class="panel-box">
             <div class="editor-section-title">
               <span>📋 누적 일지 로그 기록 (<span id="logCounter">0</span>건)</span>
               <div style="display: flex; gap: 8px;">
                 <button class="btn-outline" style="color: var(--danger);" onclick="clearAllLogs()">전체 비우기</button>
-                <button class="btn-primary" style="font-size: 13.5px; padding: 7px 16px;" onclick="copyFullChroniclePrompt()">
-                  📋 소설화 전체 복사 (Copy)
+                <button class="btn-primary" style="font-size: 13.5px; padding: 7px 16px;" onclick="copyRawLogsOnly()">
+                  📋 전체 일지 복사 (Copy)
                 </button>
               </div>
             </div>
@@ -897,7 +911,7 @@
       renderBothPawnLists();
     }
 
-    /* 12개 스탯 렌더링 (✕ 결격 토글 포함) */
+    /* 12개 스탯 렌더링 */
     function renderSkillInputs(skillsObj) {
       const container = document.getElementById('skillsVerticalContainer');
       container.innerHTML = '';
@@ -1096,6 +1110,8 @@
     function renderBothPawnLists() {
       renderPawnListTo('pawnCardListTab1', false);
       renderPawnListTo('pawnCardListTab2', true);
+      const countEl = document.getElementById('pawn-sidebar-count');
+      if (countEl) countEl.innerText = appData.pawns.length;
     }
 
     function renderPawnListTo(containerId, isTab2) {
@@ -1125,19 +1141,13 @@
       });
     }
 
-    /* 림 단독 정보 복사 (전체 12개 스탯 빠짐없이 복사) */
-    function copyCurrentPawnInfo() {
-      if (!selectedPawnId) {
-        alert("복사할 정착민을 목록에서 선택하거나 먼저 저장해 주세요.");
-        return;
-      }
-      const p = appData.pawns.find(x => x.id === selectedPawnId);
-      if (!p) return;
-
+    /* 단일 림 정보 포맷팅 헬퍼 */
+    function formatPawnText(p, index) {
+      const prefix = index !== undefined ? `[정착민 ${index + 1}] ` : `[정착민 프로필] `;
       const callSign = p.nick ? `"${p.nick}" (${p.first} ${p.last})` : `${p.first} ${p.last}`;
       const ageInfo = p.ageChrono ? `${p.ageBio}세 (동면 연대: ${p.ageChrono}세)` : `${p.ageBio || '?'}세`;
 
-      let text = `[정착민 프로필] ${callSign}\n`;
+      let text = `${prefix}${callSign}\n`;
       text += `- 성별 / 인종: ${p.gender} / ${p.race || '일반 인간'}\n`;
       text += `- 나이: ${ageInfo}\n`;
       text += `- 배경: 유년기 [${p.childhood || '불명'}] / 성년기 [${p.adulthood || '불명'}]\n`;
@@ -1156,9 +1166,38 @@
           text += `  * ${s}: ${item.level}${pIcon}\n`;
         }
       });
+      return text;
+    }
 
+    /* 선택된 단독 림 정보 복사 */
+    function copyCurrentPawnInfo() {
+      if (!selectedPawnId) {
+        alert("복사할 정착민을 목록에서 선택하거나 먼저 저장해 주세요.");
+        return;
+      }
+      const p = appData.pawns.find(x => x.id === selectedPawnId);
+      if (!p) return;
+
+      const text = formatPawnText(p);
       navigator.clipboard.writeText(text).then(() => {
-        showToast(`[${p.nick || p.first}] 전체 스탯 프로필이 복사되었습니다!`);
+        showToast(`[${p.nick || p.first}] 스탯 프로필이 복사되었습니다!`);
+      });
+    }
+
+    /* 전체 림 정보 일괄 복사 */
+    function copyAllPawnsInfo() {
+      if (appData.pawns.length === 0) {
+        alert("등록된 정착민이 없습니다.");
+        return;
+      }
+
+      let allText = `### [정착지 정착민(림) 전체 명단 (${appData.pawns.length}명)]\n\n`;
+      appData.pawns.forEach((p, idx) => {
+        allText += formatPawnText(p, idx) + "\n";
+      });
+
+      navigator.clipboard.writeText(allText.trim()).then(() => {
+        showToast(`전체 정착민(${appData.pawns.length}명) 프로필이 복사되었습니다!`);
       });
     }
 
@@ -1357,76 +1396,29 @@
       saveData();
     }
 
-    /* 전체 소설화 프롬프트 생성 (전체 12개 스탯 빠짐없이 포함) */
-    function copyFullChroniclePrompt() {
-      const colony = appData.colony || {};
-      let prompt = `당신은 공상과학 생존 시뮬레이션 게임 **'림월드(RimWorld)'**의 세계관과 정착지 연대기를 집필하는 전문 SF 스토리텔러 소설가입니다.\n`;
-      prompt += `아래에 제공된 **[정착지 환경]**, **[등장 정착민 프로필]**, 그리고 날짜순 **[플레이 일지 기록]**을 바탕으로 한 편의 몰입감 넘치는 SF 소설(에피소드)을 작성해 주세요.\n\n`;
-
-      prompt += `### [작성 지침]\n`;
-      prompt += `1. **분위기 & 톤**: 림월드 특유의 거칠고 황량한 변방계 행성 서바이벌 분위기를 극대화할 것 (고립감, 긴장감, 블랙 코미디, 생존을 위한 투쟁).\n`;
-      prompt += `2. **인물 생동감**: 정착민들의 배경 이야기(유년기/성년기), 성격 특성, 신체 결함, 전문 능력치(스탯/열정)와 결격 사항을 사건 해결이나 대화 속에 자연스럽게 녹여낼 것.\n`;
-      prompt += `3. **서사 구조**: 제공된 일지 사건들을 단순 나열하지 말고, 날짜 흐름에 따라 정착민들의 시점과 대화, 심리 묘사, 현장감 있는 액션 씬이 살아있는 완결성 있는 이야기로 재구성할 것.\n\n`;
-
-      prompt += `---\n\n`;
-      prompt += `### 1. 정착지 및 세계관 환경\n`;
-      prompt += `- **정착지 명칭**: ${colony.name || "미정"}\n`;
-      prompt += `- **바이옴 및 지형**: ${colony.biome || "변방계 행성"}\n\n`;
-
-      prompt += `### 2. 주요 등장 정착민 (림) 명단\n`;
-      if (appData.pawns.length === 0) {
-        prompt += `*(등록된 정착민 프로필이 없습니다. 무명의 생존자들로 묘사해 주세요.)*\n\n`;
-      } else {
-        appData.pawns.forEach((p, idx) => {
-          const callSign = p.nick ? `"${p.nick}" (${p.first} ${p.last})` : `${p.first} ${p.last}`;
-          const ageInfo = p.ageChrono ? `${p.ageBio}세 (동면 연대: ${p.ageChrono}세)` : `${p.ageBio || '?'}세`;
-          
-          prompt += `#### [정착민 ${idx + 1}] ${callSign}\n`;
-          prompt += `- **성별 / 인종**: ${p.gender} / ${p.race || '일반 인간'}\n`;
-          prompt += `- **나이**: ${ageInfo}\n`;
-          prompt += `- **성장 배경**: 유년기 [${p.childhood || '불명'}] / 성년기 [${p.adulthood || '불명'}]\n`;
-          prompt += `- **성격 특성**: ${p.traits || '특이사항 없음'}\n`;
-          if (p.incapable) prompt += `- **결격 사항**: ${p.incapable}\n`;
-          if (p.health) prompt += `- **건강 / 신체 부위 상태**: ${p.health}\n`;
-          if (p.relations) prompt += `- **인간관계 및 사연**: ${p.relations}\n`;
-
-          // 전체 12개 스탯 출력
-          prompt += `- **기술 스탯 (전체)**:\n`;
-          STAT_LIST.forEach(s => {
-            const item = (p.skills && p.skills[s]) ? p.skills[s] : { level: 0, passion: 0, disabled: false };
-            if (item.disabled) {
-              prompt += `  * ${s}: [결격 / 불가능]\n`;
-            } else {
-              let pIcon = item.passion === 2 ? ' 🔥🔥(열정)' : (item.passion === 1 ? ' 🔥(관심)' : '');
-              prompt += `  * ${s}: ${item.level}${pIcon}\n`;
-            }
-          });
-          prompt += `\n`;
-        });
-      }
-
-      prompt += `### 3. 실제 플레이 일지 기록 (연대기 순)\n`;
+    /* 누적 일지 로그만 순수하게 전체 복사 */
+    function copyRawLogsOnly() {
       if (appData.logs.length === 0) {
-        prompt += `*(기록된 사건 로그가 없습니다. 변방계 정착 첫날의 생존기를 상상하여 작성해 주세요.)*\n`;
-      } else {
-        sortLogsChronologically();
-        appData.logs.forEach(l => {
-          prompt += `- **[${l.dateStr}]**: ${l.text}\n`;
-        });
+        alert("복사할 누적 일지가 없습니다.");
+        return;
       }
 
-      prompt += `\n---\n위 기록들을 유기적으로 엮어 실감 나는 SF 연대기 소설로 완성해 주세요!`;
+      sortLogsChronologically();
+      let logText = "";
+      appData.logs.forEach(l => {
+        logText += `[${l.dateStr}] ${l.text}\n`;
+      });
 
-      navigator.clipboard.writeText(prompt).then(() => {
-        showToast("전체 소설화 프롬프트가 복사되었습니다!");
+      navigator.clipboard.writeText(logText.trim()).then(() => {
+        showToast("누적 일지 전체가 클립보드에 복사되었습니다!");
       }).catch(() => {
         const dummy = document.createElement("textarea");
         document.body.appendChild(dummy);
-        dummy.value = prompt;
+        dummy.value = logText.trim();
         dummy.select();
         document.execCommand("copy");
         document.body.removeChild(dummy);
-        showToast("전체 소설화 프롬프트가 복사되었습니다!");
+        showToast("누적 일지 전체가 클립보드에 복사되었습니다!");
       });
     }
 
@@ -1442,6 +1434,7 @@
       setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2200);
     }
 
+    /* JSON 백업 & 복구 */
     function exportData() {
       const json = JSON.stringify(appData, null, 2);
       const blob = new Blob([json], { type: "application/json" });
