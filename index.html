@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RimWorld Chronicle - AI Novel Prompt Generator</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            rimDark: '#0d1117',
+            rimPanel: '#161b22',
+            rimBorder: '#30363d',
+            rimAmber: '#f59e0b',
+            rimGreen: '#10b981',
+            rimCyan: '#06b6d4',
+            rimRed: '#ef4444'
+          },
+          fontFamily: {
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* RimWorld Sci-Fi HUD Vibe */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d1117;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #30363d;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #f59e0b;
+    }
+    .hud-border {
+      border: 1px solid #30363d;
+      box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.4);
+    }
+    .hud-glow-amber {
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+    }
+  </style>
+</head>
+
+<body class="bg-rimDark text-slate-200 font-sans min-h-screen flex flex-col selection:bg-amber-500/30 selection:text-amber-200">
+
+  <header class="border-b border-rimBorder bg-rimPanel/80 backdrop-blur sticky top-0 z-40 px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/40 flex items-center justify-center text-amber-500 text-xl font-bold shadow">
+        <i class="fa-solid fa-satellite-dish"></i>
+      </div>
+      <div>
+        <h1 class="text-lg md:text-xl font-black tracking-wider text-slate-100 uppercase flex items-center gap-2">
+          RIMWORLD <span class="text-amber-500 font-normal text-sm md:text-base">[연대기 프롬프트 생성기]</span>
+        </h1>
+        <p class="text-xs text-slate-400">플레이 로그를 누적 기록하고 GPT · Gemini용 소설화 프롬프트로 변환합니다.</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button id="btnBackup" onclick="exportData()" class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-rimBorder flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-file-export"></i> 백업
+      </button>
+      <label class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-rimBorder flex items-center gap-1.5 cursor-pointer transition">
+        <i class="fa-solid fa-file-import"></i> 복구
+        <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importData(event)">
+      </label>
+      <button onclick="confirmResetAll()" class="px-3 py-1.5 text-xs font-semibold rounded bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-800/50 flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-rotate-left"></i> 전체 초기화
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- LEFT COLUMN: Settlement & Colonists (4 cols) -->
+    <section class="lg:col-span-5 flex flex-col gap-5">
+      
+      <!-- Settlement Setting Card -->
+      <div class="bg-rimPanel rounded-xl hud-border p-4">
+        <div class="flex items-center justify-between pb-3 border-b border-rimBorder mb-4">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-amber-500 flex items-center gap-2">
+            <i class="fa-solid fa-campground"></i> 정착지 기본 프로필
+          </h2>
+          <span class="text-[11px] text-slate-500 font-mono">STEP 1</span>
+        </div>
+
+        <div class="space-y-3 text-sm">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">정착지 이름 & 세력명</label>
+            <input type="text" id="settlementName" placeholder="예: '희망의 골짜기' (추방자 협회)" 
+              class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition"
+              oninput="saveState(); updatePromptPreview();">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">환경 / 기후(바이옴)</label>
+              <input type="text" id="settlementBiome" placeholder="온대림, 건조 관목림, 툰드라 등" 
+                class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition"
+                oninput="saveState(); updatePromptPreview();">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">스토리텔러 & 난이도</label>
+              <input type="text" id="settlementStoryteller" placeholder="카산드라 (생존 시련)" 
+                class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition"
+                oninput="saveState(); updatePromptPreview();">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonist Management Card -->
+      <div class="bg-rimPanel rounded-xl hud-border p-4 flex-1 flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-rimBorder mb-3">
+          <div class="flex items-center gap-2">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-amber-500 flex items-center gap-2">
+              <i class="fa-solid fa-users"></i> 정착민(림) 명단 (<span id="colonistCount">0</span>)
+            </h2>
+          </div>
+          <button onclick="toggleColonistModal(true)" class="px-2.5 py-1 text-xs font-medium rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1 transition">
+            <i class="fa-solid fa-user-plus"></i> 림 추가
+          </button>
+        </div>
+
+        <!-- Colonists Scrollable Container -->
+        <div id="colonistsList" class="flex-1 space-y-2 overflow-y-auto max-h-[380px] pr-1">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Novel Writing Preferences -->
+      <div class="bg-rimPanel rounded-xl hud-border p-4">
+        <div class="flex items-center justify-between pb-3 border-b border-rimBorder mb-3">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-amber-500 flex items-center gap-2">
+            <i class="fa-solid fa-feather-pointed"></i> 소설 스타일 & 옵션
+          </h2>
+          <span class="text-[11px] text-slate-500 font-mono">OPTION</span>
+        </div>
+
+        <div class="space-y-3 text-sm">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">분위기/장르</label>
+              <select id="novelTone" onchange="saveState(); updatePromptPreview();"
+                class="w-full bg-rimDark border border-rimBorder rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                <option value="생존의 처절함과 사실적인 긴장감">생존·긴박·하드코어</option>
+                <option value="냉소적인 림월드식 블랙코미디와 부조리">블랙코미디 (림월드 감성)</option>
+                <option value="인간군상의 드라마와 서정적인 묘사">드라마·감정선 중심</option>
+                <option value="스릴 넘치는 SF 모험 활극">SF 모험 활극</option>
+                <option value="정착민의 덤덤한 1인칭 생존 회고록">생존 회고록 풍</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">시점</label>
+              <select id="novelPOV" onchange="saveState(); updatePromptPreview();"
+                class="w-full bg-rimDark border border-rimBorder rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                <option value="전지적 작가 시점 (3인칭)">3인칭 전지적 시점</option>
+                <option value="정착지 리더의 1인칭 관찰 시점">1인칭 (대표 정착민 관점)</option>
+                <option value="군상극 형태의 다각도 3인칭">다각도 군상극</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">추가 작가 지침 (선택)</label>
+            <input type="text" id="novelNotes" placeholder="예: 전투 상처 묘사를 구체적으로, 감정 독백 포함 등" 
+              class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500"
+              oninput="saveState(); updatePromptPreview();">
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <section class="lg:col-span-7 flex flex-col gap-5">
+      
+      <!-- Fast Log Entry Box -->
+      <div class="bg-rimPanel rounded-xl hud-border p-4">
+        <div class="flex items-center justify-between pb-3 border-b border-rimBorder mb-3">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-amber-500 flex items-center gap-2">
+            <i class="fa-solid fa-pen-to-square"></i> 플레이 로그 초고속 기록
+          </h2>
+          <span class="text-xs text-slate-400 font-mono">누적: <span id="logCount" class="text-amber-400 font-bold">0</span>건</span>
+        </div>
+
+        <!-- Date Picker Row -->
+        <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3">
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">연도</label>
+            <input type="number" id="logYear" value="5500" min="5500" max="6000"
+              class="w-full bg-rimDark border border-rimBorder rounded-lg px-2.5 py-1.5 text-xs text-slate-200 text-center focus:outline-none focus:border-amber-500">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">분기</label>
+            <select id="logSeason" class="w-full bg-rimDark border border-rimBorder rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
+              <option value="봄">봄 (Spring)</option>
+              <option value="여름">여름 (Summer)</option>
+              <option value="가을">가을 (Fall)</option>
+              <option value="겨울">겨울 (Winter)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">일차 (1~15일)</label>
+            <input type="number" id="logDay" value="1" min="1" max="15"
+              class="w-full bg-rimDark border border-rimBorder rounded-lg px-2.5 py-1.5 text-xs text-slate-200 text-center focus:outline-none focus:border-amber-500">
+          </div>
+          <div class="col-span-3 sm:col-span-1 flex items-end">
+            <button onclick="incrementDay()" title="다음 날로 1일 올리기" class="w-full py-1.5 px-2 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-rimBorder transition">
+              +1일 넘기기
+            </button>
+          </div>
+        </div>
+
+        <!-- Incident / Log Input Area -->
+        <div class="space-y-2">
+          <textarea id="logInput" rows="2" placeholder="사건/내용을 적으세요 (예: 메카노이드 전초기지 낙하. 알렉스가 척추 파편상 입음. 식량 120개 수확 완료 등) - [Shift + Enter: 줄바꿈 / Enter: 즉시 등록]"
+            class="w-full bg-rimDark border border-rimBorder rounded-lg p-3 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition resize-none"></textarea>
+          
+          <div class="flex items-center justify-between">
+            <div class="flex flex-wrap gap-1.5">
+              <!-- Quick Tag chips to help prompt writing -->
+              <button onclick="insertTag('[습격] ')" class="text-[11px] px-2 py-0.5 rounded bg-red-950/50 hover:bg-red-900/80 text-red-300 border border-red-800/40 transition">#습격</button>
+              <button onclick="insertTag('[영입] ')" class="text-[11px] px-2 py-0.5 rounded bg-emerald-950/50 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-800/40 transition">#영입</button>
+              <button onclick="insertTag('[부상/질병] ')" class="text-[11px] px-2 py-0.5 rounded bg-amber-950/50 hover:bg-amber-900/80 text-amber-300 border border-amber-800/40 transition">#부상</button>
+              <button onclick="insertTag('[정신붕괴] ')" class="text-[11px] px-2 py-0.5 rounded bg-purple-950/50 hover:bg-purple-900/80 text-purple-300 border border-purple-800/40 transition">#정신붕괴</button>
+              <button onclick="insertTag('[축제/일상] ')" class="text-[11px] px-2 py-0.5 rounded bg-cyan-950/50 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-800/40 transition">#일상</button>
+            </div>
+            <button id="btnAddLog" onclick="addLog()" class="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs tracking-wide shadow flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-plus"></i> 일지 추가 (Enter)
+            </button>
+          </div>
+        </div>
+
+        <!-- Log List Items -->
+        <div class="mt-4 pt-3 border-t border-rimBorder">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">누적된 기록 목록</span>
+            <button onclick="clearLogsOnly()" class="text-[11px] text-slate-500 hover:text-red-400 transition">
+              <i class="fa-regular fa-trash-can"></i> 일지만 비우기
+            </button>
+          </div>
+          <div id="logsContainer" class="space-y-2 max-h-[190px] overflow-y-auto pr-1">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Generated Prompt Preview & Quick Copy Area -->
+      <div class="bg-rimPanel rounded-xl hud-border p-4 flex-1 flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-rimBorder mb-3">
+          <div class="flex items-center gap-2">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-amber-500 flex items-center gap-2">
+              <i class="fa-solid fa-terminal"></i> AI 소설화 완성 프롬프트
+            </h2>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-rimBorder font-mono">Real-time Markdown</span>
+          </div>
+          <button onclick="copyPromptToClipboard()" class="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs tracking-wider shadow flex items-center gap-1.5 transition">
+            <i class="fa-regular fa-copy"></i> 전체 복사 (Copy)
+          </button>
+        </div>
+
+        <div class="relative flex-1">
+          <textarea id="promptOutput" readonly class="w-full h-full min-h-[220px] bg-rimDark border border-rimBorder rounded-lg p-3 text-xs font-mono text-slate-300 focus:outline-none resize-none leading-relaxed select-all" placeholder="플레이 일지를 1건 이상 추가하면 프롬프트가 자동 조립됩니다."></textarea>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <div id="colonistModal" class="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-rimPanel border border-rimBorder rounded-xl max-w-md w-full p-5 hud-glow-amber">
+      <div class="flex items-center justify-between pb-3 border-b border-rimBorder mb-4">
+        <h3 id="modalTitle" class="text-base font-bold text-amber-500 flex items-center gap-2">
+          <i class="fa-solid fa-user-astronaut"></i> 정착민 등록
+        </h3>
+        <button onclick="toggleColonistModal(false)" class="text-slate-400 hover:text-slate-200">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <input type="hidden" id="modalColonistId">
+
+      <div class="space-y-3 text-sm">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">이름 / 닉네임 *</label>
+            <input type="text" id="modalColName" placeholder="예: 알렉스 (Alex)" class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">직책 / 역할</label>
+            <input type="text" id="modalColRole" placeholder="예: 지도자, 수석 의사, 사냥꾼" class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">특성 (Traits)</label>
+          <input type="text" id="modalColTraits" placeholder="예: 식인종, 다정함, 신속, 약물 중독" class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">결격 사항 / 약점</label>
+          <input type="text" id="modalColIncapable" placeholder="예: 소화 불가, 폭력 불가, 왼쪽 눈 결손" class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">인물 배경 / 성격 메모 (선택)</label>
+          <textarea id="modalColBio" rows="2" placeholder="예: 전직 해적이었으나 불시착 후 개과천선함. 신경이 날카로움." class="w-full bg-rimDark border border-rimBorder rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 resize-none"></textarea>
+        </div>
+      </div>
+
+      <div class="mt-5 flex justify-end gap-2">
+        <button onclick="toggleColonistModal(false)" class="px-4 py-2 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">취소</button>
+        <button onclick="saveColonistFromModal()" class="px-4 py-2 text-xs rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition">저장하기</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="fixed bottom-5 right-5 px-4 py-2.5 rounded-lg bg-slate-900 border border-emerald-500 text-emerald-400 text-xs font-semibold shadow-2xl flex items-center gap-2 transform translate-y-16 opacity-0 transition duration-300 pointer-events-none z-50">
+    <i class="fa-solid fa-circle-check"></i>
+    <span id="toastMsg">복사되었습니다!</span>
+  </div>
+
+  <script>
+    // Storage Key
+    const STORAGE_KEY = 'rimworld_chronicle_data_v1';
+
+    // Application state
+    let state = {
+      settlement: {
+        name: '뉴 헤이븐 (New Haven)',
+        biome: '온대림 (연중 생육 가능)',
+        storyteller: '카산드라 클래식 (생존 시련)'
+      },
+      options: {
+        tone: '생존의 처절함과 사실적인 긴장감',
+        pov: '전지적 작가 시점 (3인칭)',
+        notes: '전투 시 부상 상태와 정착민 사이의 사소한 대화, 긴장감을 생생하게 묘사해줘.'
+      },
+      colonists: [
+        {
+          id: 'c1',
+          name: '아서 (Arthur)',
+          role: '정착지 리더 & 건설가',
+          traits: '신중한 사수, 근면성실',
+          incapable: '예술 불가',
+          bio: '불시착선의 유일한 장교 출신으로 책임감이 강함.'
+        },
+        {
+          id: 'c2',
+          name: '발렌티나 (Valentina)',
+          role: '군의관',
+          traits: '다정함, 피에 굶주림',
+          incapable: '단순 노동 불가',
+          bio: '외과 수술 실력은 뛰어나나 다소 섬뜩한 면이 있음.'
+        }
+      ],
+      logs: [
+        {
+          id: 'l1',
+          year: 5500,
+          season: '봄',
+          day: 1,
+          content: '우주선 파편과 함께 미지의 행성에 불시착. 아서가 기본 목재 막사를 짓기 시작했다.'
+        },
+        {
+          id: 'l2',
+          year: 5500,
+          season: '봄',
+          day: 3,
+          content: '[습격] 단검을 든 광신도 1명 기습. 발렌티나가 권총으로 제압 완료. 식량 재배 구역 설정.'
+        }
+      ]
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      bindInputs();
+      renderAll();
+
+      // Enter key shortcut for log entry
+      document.getElementById('logInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          addLog();
+        }
+      });
+    });
+
+    function saveState() {
+      state.settlement.name = document.getElementById('settlementName').value;
+      state.settlement.biome = document.getElementById('settlementBiome').value;
+      state.settlement.storyteller = document.getElementById('settlementStoryteller').value;
+      
+      state.options.tone = document.getElementById('novelTone').value;
+      state.options.pov = document.getElementById('novelPOV').value;
+      state.options.notes = document.getElementById('novelNotes').value;
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state = { ...state, ...parsed };
+        }
+      } catch (err) {
+        console.error("데이터 복원 실패:", err);
+      }
+    }
+
+    function bindInputs() {
+      document.getElementById('settlementName').value = state.settlement.name || '';
+      document.getElementById('settlementBiome').value = state.settlement.biome || '';
+      document.getElementById('settlementStoryteller').value = state.settlement.storyteller || '';
+      
+      document.getElementById('novelTone').value = state.options.tone || '생존의 처절함과 사실적인 긴장감';
+      document.getElementById('novelPOV').value = state.options.pov || '전지적 작가 시점 (3인칭)';
+      document.getElementById('novelNotes').value = state.options.notes || '';
+    }
+
+    function renderAll() {
+      renderColonists();
+      renderLogs();
+      updatePromptPreview();
+    }
+
+    function renderColonists() {
+      const container = document.getElementById('colonistsList');
+      const countEl = document.getElementById('colonistCount');
+      countEl.textContent = state.colonists.length;
+
+      if (state.colonists.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-6 text-slate-500 text-xs border border-dashed border-rimBorder rounded-lg">
+            등록된 정착민이 없습니다.<br>'+ 림 추가'를 눌러 등록해보세요.
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = state.colonists.map(c => `
+        <div class="p-2.5 bg-rimDark/80 border border-rimBorder rounded-lg flex items-start justify-between gap-2 hover:border-slate-600 transition">
+          <div class="text-xs space-y-0.5">
+            <div class="flex items-center gap-1.5 font-bold text-slate-200">
+              <span>${escapeHtml(c.name)}</span>
+              ${c.role ? `<span class="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 font-normal border border-amber-500/30">${escapeHtml(c.role)}</span>` : ''}
+            </div>
+            ${c.traits ? `<div class="text-[11px] text-slate-400"><span class="text-slate-500">특성:</span> ${escapeHtml(c.traits)}</div>` : ''}
+            ${c.incapable ? `<div class="text-[11px] text-red-400/80"><span class="text-slate-500">결격:</span> ${escapeHtml(c.incapable)}</div>` : ''}
+            ${c.bio ? `<div class="text-[10px] text-slate-500 italic truncate max-w-[240px]">${escapeHtml(c.bio)}</div>` : ''}
+          </div>
+          <div class="flex items-center gap-1">
+            <button onclick="editColonist('${c.id}')" class="p-1 text-slate-400 hover:text-amber-400 text-xs" title="수정">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button onclick="deleteColonist('${c.id}')" class="p-1 text-slate-400 hover:text-red-400 text-xs" title="삭제">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleColonistModal(show) {
+      const modal = document.getElementById('colonistModal');
+      if (show) {
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
+        resetColonistForm();
+      }
+    }
+
+    function resetColonistForm() {
+      document.getElementById('modalColonistId').value = '';
+      document.getElementById('modalColName').value = '';
+      document.getElementById('modalColRole').value = '';
+      document.getElementById('modalColTraits').value = '';
+      document.getElementById('modalColIncapable').value = '';
+      document.getElementById('modalColBio').value = '';
+      document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-user-astronaut"></i> 정착민 등록';
+    }
+
+    function saveColonistFromModal() {
+      const id = document.getElementById('modalColonistId').value;
+      const name = document.getElementById('modalColName').value.trim();
+      const role = document.getElementById('modalColRole').value.trim();
+      const traits = document.getElementById('modalColTraits').value.trim();
+      const incapable = document.getElementById('modalColIncapable').value.trim();
+      const bio = document.getElementById('modalColBio').value.trim();
+
+      if (!name) {
+        showToast('정착민 이름을 입력해주세요.');
+        return;
+      }
+
+      if (id) {
+        // Edit existing
+        const idx = state.colonists.findIndex(c => c.id === id);
+        if (idx !== -1) {
+          state.colonists[idx] = { id, name, role, traits, incapable, bio };
+        }
+      } else {
+        // Add new
+        state.colonists.push({
+          id: 'c_' + Date.now(),
+          name, role, traits, incapable, bio
+        });
+      }
+
+      saveState();
+      renderColonists();
+      updatePromptPreview();
+      toggleColonistModal(false);
+      showToast('정착민 정보가 저장되었습니다.');
+    }
+
+    function editColonist(id) {
+      const col = state.colonists.find(c => c.id === id);
+      if (!col) return;
+      document.getElementById('modalColonistId').value = col.id;
+      document.getElementById('modalColName').value = col.name;
+      document.getElementById('modalColRole').value = col.role || '';
+      document.getElementById('modalColTraits').value = col.traits || '';
+      document.getElementById('modalColIncapable').value = col.incapable || '';
+      document.getElementById('modalColBio').value = col.bio || '';
+      document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-user-pen"></i> 정착민 수정';
+      toggleColonistModal(true);
+    }
+
+    function deleteColonist(id) {
+      state.colonists = state.colonists.filter(c => c.id !== id);
+      saveState();
+      renderColonists();
+      updatePromptPreview();
+      showToast('정착민이 명단에서 삭제되었습니다.');
+    }
+
+    function addLog() {
+      const input = document.getElementById('logInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const year = parseInt(document.getElementById('logYear').value) || 5500;
+      const season = document.getElementById('logSeason').value;
+      const day = parseInt(document.getElementById('logDay').value) || 1;
+
+      state.logs.push({
+        id: 'l_' + Date.now(),
+        year,
+        season,
+        day,
+        content: text
+      });
+
+      input.value = '';
+      saveState();
+      renderLogs();
+      updatePromptPreview();
+
+      // Scroll logs to bottom
+      const container = document.getElementById('logsContainer');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function renderLogs() {
+      const container = document.getElementById('logsContainer');
+      const countEl = document.getElementById('logCount');
+      countEl.textContent = state.logs.length;
+
+      if (state.logs.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-5 text-slate-500 text-xs border border-dashed border-rimBorder rounded-lg">
+            누적된 일지가 없습니다. 사건을 입력하고 [Enter]를 누르세요.
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = state.logs.map((log, idx) => `
+        <div class="p-2.5 bg-rimDark/90 border border-rimBorder rounded-lg text-xs flex items-start justify-between gap-2 hover:border-slate-600 transition">
+          <div class="space-y-1 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-amber-400 font-semibold text-[11px] bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                ${log.year}년 ${log.season} ${log.day}일
+              </span>
+              <span class="text-[10px] text-slate-500 font-mono">#${idx + 1}</span>
+            </div>
+            <p class="text-slate-200 leading-relaxed break-words whitespace-pre-line">${escapeHtml(log.content)}</p>
+          </div>
+          <button onclick="deleteLog('${log.id}')" class="p-1 text-slate-500 hover:text-red-400 text-xs transition" title="로그 삭제">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function deleteLog(id) {
+      state.logs = state.logs.filter(l => l.id !== id);
+      saveState();
+      renderLogs();
+      updatePromptPreview();
+    }
+
+    function clearLogsOnly() {
+      if (state.logs.length === 0) return;
+      state.logs = [];
+      saveState();
+      renderLogs();
+      updatePromptPreview();
+      showToast('플레이 일지가 초기화되었습니다.');
+    }
+
+    function incrementDay() {
+      const dayInput = document.getElementById('logDay');
+      const seasonInput = document.getElementById('logSeason');
+      const yearInput = document.getElementById('logYear');
+
+      let currentDay = parseInt(dayInput.value) || 1;
+      let currentYear = parseInt(yearInput.value) || 5500;
+      const seasons = ['봄', '여름', '가을', '겨울'];
+      let seasonIdx = seasons.indexOf(seasonInput.value);
+
+      if (currentDay < 15) {
+        dayInput.value = currentDay + 1;
+      } else {
+        // RimWorld 1 season = 15 days
+        dayInput.value = 1;
+        if (seasonIdx < 3) {
+          seasonInput.value = seasons[seasonIdx + 1];
+        } else {
+          seasonInput.value = '봄';
+          yearInput.value = currentYear + 1;
+        }
+      }
+    }
+
+    function insertTag(tag) {
+      const input = document.getElementById('logInput');
+      input.value = tag + input.value;
+      input.focus();
+    }
+
+    function updatePromptPreview() {
+      const settlement = state.settlement;
+      const options = state.options;
+
+      let prompt = `당신은 노련하고 필력이 뛰어난 SF 생존 웹소설 작가입니다.
+아래에 제공되는 샌드박스 SF 생존 게임 '림월드(RimWorld)'의 실제 플레이 일지와 정착민 프로필을 바탕으로, 몰입감 넘치고 흥미진진한 챕터형 단편 소설을 집필해주세요.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 1. 정착지 및 세계관 배경 ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- 정착지명: ${settlement.name || '미정'}
+- 기후/바이옴: ${settlement.biome || '미정'}
+- 스토리텔러 & 난이도: ${settlement.storyteller || '미정'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 2. 주요 등장인물 (정착민 명단) ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+      if (state.colonists.length === 0) {
+        prompt += `- (별도 등록 인물 없음: 플레이 로그에 언급된 인물 위주로 묘사)\n`;
+      } else {
+        state.colonists.forEach(c => {
+          prompt += `* **${c.name}** [${c.role || '정착민'}]\n`;
+          if (c.traits) prompt += `  - 특성: ${c.traits}\n`;
+          if (c.incapable) prompt += `  - 결격사항/특이점: ${c.incapable}\n`;
+          if (c.bio) prompt += `  - 인물 배경: ${c.bio}\n`;
+        });
+      }
+
+      prompt += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 3. 시간순 플레이 일지 기록 ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+      if (state.logs.length === 0) {
+        prompt += `(아직 기록된 일지가 없습니다. 웹페이지 상단에서 플레이 일지를 추가하세요.)\n`;
+      } else {
+        state.logs.forEach(l => {
+          prompt += `* [${l.year}년 ${l.season} ${l.day}일] : ${l.content}\n`;
+        });
+      }
+
+      prompt += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 4. 소설 집필 지침 (필수 준수) ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. **문체 및 분위기**: ${options.tone}
+2. **서술 시점**: ${options.pov}
+3. **스토리텔링 가이드**:
+   - 단순히 일지를 시간 순으로 요약하는 것이 아니라, 현장감 넘치는 생생한 장면(대화, 심리 묘사, 거친 변방계 환경의 냄새와 소리, 위기 상황의 촉박함)으로 극화해주세요.
+   - 림월드 특유의 냉혹한 자연재해, 부조리한 습격, 질병, 그리고 그 속에서 피어나는 정착민들 사이의 유대감을 균형 있게 다루어주세요.
+   - 각 정착민의 특성과 성격이 대사와 행동 양식에 뚜렷하게 반영되도록 해주세요.
+${options.notes ? `4. **추가 요청**: ${options.notes}\n` : ''}
+자, 위의 기록들을 바탕으로 완성도 높은 소설 한 편을 작성해 주세요.`;
+
+      document.getElementById('promptOutput').value = prompt;
+    }
+
+    function copyPromptToClipboard() {
+      const promptEl = document.getElementById('promptOutput');
+      promptEl.select();
+      promptEl.setSelectionRange(0, 99999);
+
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          showToast('프롬프트가 클립보드에 복사되었습니다! AI에 바로 붙여넣으세요.');
+        } else {
+          showToast('복사에 실패했습니다. 수동으로 복사해주세요.');
+        }
+      } catch (err) {
+        showToast('복사 기능을 실행할 수 없습니다.');
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.textContent = msg;
+
+      toast.classList.remove('opacity-0', 'translate-y-16');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-16');
+      }, 2500);
+    }
+
+    function exportData() {
+      saveState();
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `rimworld_chronicle_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('백업 파일(.json)이 다운로드되었습니다.');
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported && imported.settlement && imported.logs) {
+            state = imported;
+            saveState();
+            bindInputs();
+            renderAll();
+            showToast('데이터가 성공적으로 복원되었습니다.');
+          } else {
+            showToast('유효하지 않은 데이터 형식입니다.');
+          }
+        } catch (err) {
+          showToast('파일을 읽는 중 오류가 발생했습니다.');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function confirmResetAll() {
+      // Avoid browser native confirm() - in-place safe confirm via state flag
+      const btn = event.currentTarget;
+      if (btn.dataset.confirming === 'true') {
+        state.settlement = { name: '', biome: '', storyteller: '' };
+        state.colonists = [];
+        state.logs = [];
+        state.options = {
+          tone: '생존의 처절함과 사실적인 긴장감',
+          pov: '전지적 작가 시점 (3인칭)',
+          notes: ''
+        };
+        localStorage.removeItem(STORAGE_KEY);
+        bindInputs();
+        renderAll();
+        btn.dataset.confirming = 'false';
+        btn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> 전체 초기화';
+        showToast('모든 데이터가 초기화되었습니다.');
+      } else {
+        btn.dataset.confirming = 'true';
+        btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> 진짜 삭제? (다시 클릭)';
+        setTimeout(() => {
+          btn.dataset.confirming = 'false';
+          btn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> 전체 초기화';
+        }, 3000);
+      }
+    }
+
+    function escapeHtml(string) {
+      if (!string) return '';
+      return String(string)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
