@@ -1,821 +1,1481 @@
 <!DOCTYPE html>
-<html lang="ko" class="dark">
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RimWorld Chronicle - AI Novel Prompt Generator</title>
-  <!-- Tailwind CSS via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            rimDark: '#0d1117',
-            rimPanel: '#161b22',
-            rimBorder: '#30363d',
-            rimAmber: '#f59e0b',
-            rimGreen: '#10b981',
-            rimCyan: '#06b6d4',
-            rimRed: '#ef4444'
-          },
-          fontFamily: {
-            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
-          }
-        }
-      }
-    }
-  </script>
+  <title>RimWorld Chronicle & AI Storyteller Generator</title>
   <style>
-    /* RimWorld Sci-Fi HUD Vibe */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+    :root {
+      --bg-dark: #121417;
+      --bg-panel: #1b1f24;
+      --bg-card: #242930;
+      --bg-input: #0f1215;
+      --border: #323a44;
+      --border-focus: #e5a73b;
+      --accent: #d88e28;
+      --accent-hover: #f0a33a;
+      --accent-dim: rgba(216, 142, 40, 0.15);
+      --danger: #cf453b;
+      --danger-hover: #eb5448;
+      --success: #3fb950;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --font-mono: 'Consolas', 'Courier New', monospace;
+      --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
     }
-    ::-webkit-scrollbar-track {
-      background: #0d1117;
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text);
+      font-family: var(--font-main);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
-    ::-webkit-scrollbar-thumb {
-      background: #30363d;
+
+    header {
+      background-color: var(--bg-panel);
+      border-bottom: 2px solid var(--accent);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: 0.5px;
+    }
+    .brand-title span {
+      background: var(--accent);
+      color: #000;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+    }
+    .tab-btn {
+      background-color: var(--bg-card);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 8px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tab-btn:hover {
+      background-color: #2e353f;
+      color: #fff;
+    }
+    .tab-btn.active {
+      background-color: var(--accent);
+      color: #121417;
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(216, 142, 40, 0.4);
+    }
+    .badge {
+      background: rgba(0,0,0,0.25);
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn-header-save {
+      background: var(--accent);
+      color: #121417;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.2s;
+    }
+    .btn-header-save:hover {
+      background: var(--accent-hover);
+    }
+    .btn-header-danger {
+      background: transparent;
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 6px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-header-danger:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    .btn-outline:hover {
+      border-color: var(--text-muted);
+      color: #fff;
+    }
+
+    main {
+      flex: 1;
+      padding: 20px 24px;
+      max-width: 1550px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.15s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Forms & Inputs */
+    label {
+      display: block;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    input, select, textarea {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 5px;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--border-focus);
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+    /* Buttons */
+    .btn-primary {
+      background: var(--accent);
+      color: #121417;
+      border: none;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-secondary {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .btn-secondary:hover { border-color: var(--text-muted); }
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-danger:hover { background: var(--danger-hover); }
+
+    /* 공통 2열 레이아웃 */
+    .two-column-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .pawn-sidebar {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .pawn-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 720px;
+      overflow-y: auto;
+    }
+    .pawn-card-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pawn-card-item:hover {
+      border-color: var(--accent);
+      transform: translateX(3px);
+    }
+    .pawn-card-item.selected {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+    }
+    .pawn-card-info h4 {
+      font-size: 13.5px;
+      color: #fff;
+    }
+    .pawn-card-info p {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .panel-box {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .editor-section-title {
+      font-size: 14px;
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+      margin-bottom: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* 림 에디터 내부 분할 */
+    .pawn-editor-body {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 20px;
+      align-items: start;
+    }
+    .pawn-main-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* 12 Stats Vertical List with Inability(✕) Toggle */
+    .skills-column-panel {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .skills-column-title {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+    }
+    .skill-card-vertical {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 4px;
+      padding: 4px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.15s;
+    }
+    .skill-card-vertical:hover {
+      background: #2b323c;
+    }
+    .skill-card-vertical.disabled {
+      opacity: 0.45;
+      background: #181b20;
+    }
+    .skill-card-vertical.disabled .skill-name {
+      text-decoration: line-through;
+      color: var(--danger);
+    }
+    .skill-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ✕ 결격 토글 버튼 */
+    .btn-incapable-toggle {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #666;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 800;
+      width: 22px;
+      height: 22px;
       border-radius: 3px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
     }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #f59e0b;
+    .btn-incapable-toggle:hover {
+      border-color: var(--danger);
+      color: var(--danger);
     }
-    .hud-border {
-      border: 1px solid #30363d;
-      box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.4);
+    .btn-incapable-toggle.active {
+      background: rgba(207, 69, 59, 0.25);
+      border-color: var(--danger);
+      color: #ff6b6b;
     }
-    .hud-glow-amber {
-      box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+
+    .skill-name {
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .passion-toggle {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+      width: 36px;
+      min-width: 36px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      padding: 0;
+      border-radius: 4px;
+      user-select: none;
+      letter-spacing: -2px;
+      transition: background 0.15s;
+    }
+    .passion-toggle:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .skill-input {
+      width: 48px;
+      text-align: center;
+      font-weight: 700;
+      padding: 3px;
+      font-size: 13px;
+    }
+
+    /* 일지 탭 내부 스타일 */
+    .journal-content-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .top-single-row {
+      display: grid;
+      grid-template-columns: 1.5fr 1.5fr 1fr 1fr 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .log-input-row {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .log-input-row textarea {
+      flex: 1;
+      height: 60px;
+      resize: none;
+    }
+    .btn-add-log {
+      width: 140px;
+      font-size: 14.5px;
+      font-weight: 700;
+      background: var(--accent);
+      color: #121417;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .btn-add-log:hover {
+      background: var(--accent-hover);
+    }
+
+    /* 누적 로그 리스트 */
+    .log-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 540px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    .log-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .log-item:hover {
+      background: #272d36;
+    }
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .log-date {
+      font-size: 12px;
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-weight: bold;
+    }
+    .log-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .log-text {
+      font-size: 13.5px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .log-edit-box {
+      background: var(--bg-input);
+      border: 1px solid var(--accent);
+      border-radius: 5px;
+      padding: 10px;
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* 토스트 알림 */
+    #toast {
+      visibility: hidden;
+      min-width: 250px;
+      background-color: var(--accent);
+      color: #121417;
+      text-align: center;
+      border-radius: 6px;
+      padding: 12px 18px;
+      position: fixed;
+      z-index: 1000;
+      right: 30px;
+      bottom: 30px;
+      font-weight: 700;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+      transition: opacity 0.3s, visibility 0.3s;
+      opacity: 0;
+    }
+    #toast.show {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    @media (max-width: 1100px) {
+      .two-column-layout { grid-template-columns: 1fr; }
+      .pawn-editor-body { grid-template-columns: 1fr; }
+      .top-single-row { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
+<body>
 
-<body class="bg-rimDark text-slate-200 font-sans min-h-screen flex flex-col selection:bg-amber-500/30 selection:text-amber-200">
-
-  <header class="border-b border-rimBorder bg-rimPanel/80 backdrop-blur sticky top-0 z-40 px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/40 flex items-center justify-center text-amber-500 text-xl font-bold shadow">
-        <i class="fa-solid fa-satellite-dish"></i>
-      </div>
-      <div>
-        <h1 class="text-lg md:text-xl font-black tracking-wider text-slate-100 uppercase flex items-center gap-2">
-          RIMWORLD <span class="text-amber-500 font-normal text-sm md:text-base">[연대기 프롬프트 생성기]</span>
-        </h1>
-        <p class="text-xs text-slate-400">플레이 로그를 누적 기록하고 GPT · Gemini용 소설화 프롬프트로 변환합니다.</p>
-      </div>
+  <!-- 상단 네비게이션 헤더 -->
+  <header>
+    <div class="brand-title">
+      RIMCHRONICLE <span>Story Prompter</span>
     </div>
 
-    <div class="flex items-center gap-2">
-      <button id="btnBackup" onclick="exportData()" class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-rimBorder flex items-center gap-1.5 transition">
-        <i class="fa-solid fa-file-export"></i> 백업
+    <nav class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('pawns')">
+        👥 림(정착민) 세팅 <span class="badge" id="pawn-count-badge">0</span>
       </button>
-      <label class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-rimBorder flex items-center gap-1.5 cursor-pointer transition">
-        <i class="fa-solid fa-file-import"></i> 복구
-        <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importData(event)">
-      </label>
-      <button onclick="confirmResetAll()" class="px-3 py-1.5 text-xs font-semibold rounded bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-800/50 flex items-center gap-1.5 transition">
-        <i class="fa-solid fa-rotate-left"></i> 전체 초기화
+      <button class="tab-btn" onclick="switchTab('journal')">
+        📖 일지 작성 및 복사 <span class="badge" id="log-count-badge">0</span>
       </button>
+    </nav>
+
+    <div class="header-actions">
+      <button class="btn-header-save" onclick="manualSaveAll()">💾 전체 저장</button>
+      <button class="btn-header-danger" onclick="confirmResetAll()">⚠️ 전체 초기화</button>
+      <button class="btn-outline" onclick="exportData()">백업(JSON)</button>
+      <button class="btn-outline" onclick="document.getElementById('importFile').click()">복구</button>
+      <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
     </div>
   </header>
 
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-    <!-- LEFT COLUMN: Settlement & Colonists (4 cols) -->
-    <section class="lg:col-span-5 flex flex-col gap-5">
-      
-      <!-- Settlement Setting Card -->
-      <div class="bg-rimPanel rounded-xl hud-border p-4">
-        <div class="flex items-center justify-between pb-3 border-b border-rimBorder mb-4">
-          <h2 class="text-sm font-bold uppercase tracking-wider text-amber-500 flex items-center gap-2">
-            <i class="fa-solid fa-campground"></i> 정착지 기본 프로필
-          </h2>
-          <span class="text-[11px] text-slate-500 font-mono">STEP 1</span>
-        </div>
-
-        <div class="space-y-3 text-sm">
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">정착지 이름 & 세력명</label>
-            <input type="text" id="settlementName" placeholder="예: '희망의 골짜기' (추방자 협회)" 
-              class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition"
-              oninput="saveState(); updatePromptPreview();">
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">환경 / 기후(바이옴)</label>
-              <input type="text" id="settlementBiome" placeholder="온대림, 건조 관목림, 툰드라 등" 
-                class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition"
-                oninput="saveState(); updatePromptPreview();">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">스토리텔러 & 난이도</label>
-              <input type="text" id="settlementStoryteller" placeholder="카산드라 (생존 시련)" 
-                class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition"
-                oninput="saveState(); updatePromptPreview();">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Colonist Management Card -->
-      <div class="bg-rimPanel rounded-xl hud-border p-4 flex-1 flex flex-col">
-        <div class="flex items-center justify-between pb-3 border-b border-rimBorder mb-3">
-          <div class="flex items-center gap-2">
-            <h2 class="text-sm font-bold uppercase tracking-wider text-amber-500 flex items-center gap-2">
-              <i class="fa-solid fa-users"></i> 정착민(림) 명단 (<span id="colonistCount">0</span>)
-            </h2>
-          </div>
-          <button onclick="toggleColonistModal(true)" class="px-2.5 py-1 text-xs font-medium rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1 transition">
-            <i class="fa-solid fa-user-plus"></i> 림 추가
+  <main>
+    <!-- TAB 1: 림 세팅 파트 -->
+    <div id="tab-pawns" class="tab-content active">
+      <div class="two-column-layout">
+        <!-- 좌측: 림 목록 사이드바 -->
+        <div class="pawn-sidebar">
+          <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="resetPawnForm()">
+            ➕ 새 림(정착민) 추가
           </button>
+          <div style="font-size: 11.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
+            등록된 정착민 목록
+          </div>
+          <div class="pawn-list" id="pawnCardListTab1">
+            <!-- 동적 렌더링 -->
+          </div>
         </div>
 
-        <!-- Colonists Scrollable Container -->
-        <div id="colonistsList" class="flex-1 space-y-2 overflow-y-auto max-h-[380px] pr-1">
-          <!-- Dynamically populated -->
-        </div>
-      </div>
-
-      <!-- Novel Writing Preferences -->
-      <div class="bg-rimPanel rounded-xl hud-border p-4">
-        <div class="flex items-center justify-between pb-3 border-b border-rimBorder mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wider text-amber-500 flex items-center gap-2">
-            <i class="fa-solid fa-feather-pointed"></i> 소설 스타일 & 옵션
-          </h2>
-          <span class="text-[11px] text-slate-500 font-mono">OPTION</span>
-        </div>
-
-        <div class="space-y-3 text-sm">
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">분위기/장르</label>
-              <select id="novelTone" onchange="saveState(); updatePromptPreview();"
-                class="w-full bg-rimDark border border-rimBorder rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
-                <option value="생존의 처절함과 사실적인 긴장감">생존·긴박·하드코어</option>
-                <option value="냉소적인 림월드식 블랙코미디와 부조리">블랙코미디 (림월드 감성)</option>
-                <option value="인간군상의 드라마와 서정적인 묘사">드라마·감정선 중심</option>
-                <option value="스릴 넘치는 SF 모험 활극">SF 모험 활극</option>
-                <option value="정착민의 덤덤한 1인칭 생존 회고록">생존 회고록 풍</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">시점</label>
-              <select id="novelPOV" onchange="saveState(); updatePromptPreview();"
-                class="w-full bg-rimDark border border-rimBorder rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
-                <option value="전지적 작가 시점 (3인칭)">3인칭 전지적 시점</option>
-                <option value="정착지 리더의 1인칭 관찰 시점">1인칭 (대표 정착민 관점)</option>
-                <option value="군상극 형태의 다각도 3인칭">다각도 군상극</option>
-              </select>
+        <!-- 우측: 림 인게임 캐릭터 시트 에디터 -->
+        <div class="panel-box">
+          <div class="editor-section-title">
+            <span id="editorFormHeading">정착민 상세 정보 편집</span>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-secondary" id="btnCopyPawn" onclick="copyCurrentPawnInfo()">📋 림 정보 복사</button>
+              <button class="btn-danger" id="btnDeletePawn" style="display: none;" onclick="deleteCurrentPawn()">삭제</button>
+              <button class="btn-primary" onclick="savePawn()">정착민 저장</button>
             </div>
           </div>
 
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">추가 작가 지침 (선택)</label>
-            <input type="text" id="novelNotes" placeholder="예: 전투 상처 묘사를 구체적으로, 감정 독백 포함 등" 
-              class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500"
-              oninput="saveState(); updatePromptPreview();">
-          </div>
-        </div>
-      </div>
+          <input type="hidden" id="pawnId">
 
-    </section>
+          <div class="pawn-editor-body">
+            <div class="pawn-main-fields">
+              <div class="grid-4">
+                <div>
+                  <label>이름 (First)</label>
+                  <input type="text" id="pawnFirst" placeholder="예: 알렉스">
+                </div>
+                <div>
+                  <label>별명 (Nick)</label>
+                  <input type="text" id="pawnNick" placeholder="예: 늑대">
+                </div>
+                <div>
+                  <label>성 (Last)</label>
+                  <input type="text" id="pawnLast" placeholder="예: 잭슨">
+                </div>
+                <div>
+                  <label>성별</label>
+                  <select id="pawnGender">
+                    <option value="남성">남성</option>
+                    <option value="여성">여성</option>
+                    <option value="알 수 없음">기타/알 수 없음</option>
+                  </select>
+                </div>
+              </div>
 
-    <section class="lg:col-span-7 flex flex-col gap-5">
-      
-      <!-- Fast Log Entry Box -->
-      <div class="bg-rimPanel rounded-xl hud-border p-4">
-        <div class="flex items-center justify-between pb-3 border-b border-rimBorder mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wider text-amber-500 flex items-center gap-2">
-            <i class="fa-solid fa-pen-to-square"></i> 플레이 로그 초고속 기록
-          </h2>
-          <span class="text-xs text-slate-400 font-mono">누적: <span id="logCount" class="text-amber-400 font-bold">0</span>건</span>
-        </div>
+              <div class="grid-3">
+                <div>
+                  <label>생체 나이</label>
+                  <input type="number" id="pawnAgeBio" placeholder="예: 28" min="0">
+                </div>
+                <div>
+                  <label>동면 포함 연대 나이</label>
+                  <input type="number" id="pawnAgeChrono" placeholder="예: 142" min="0">
+                </div>
+                <div>
+                  <label>인종 / 제노타입</label>
+                  <input type="text" id="pawnRace" placeholder="기본 인간 (바슬링), 예퍼 등">
+                </div>
+              </div>
 
-        <!-- Date Picker Row -->
-        <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3">
-          <div>
-            <label class="block text-[11px] text-slate-400 mb-1">연도</label>
-            <input type="number" id="logYear" value="5500" min="5500" max="6000"
-              class="w-full bg-rimDark border border-rimBorder rounded-lg px-2.5 py-1.5 text-xs text-slate-200 text-center focus:outline-none focus:border-amber-500">
-          </div>
-          <div>
-            <label class="block text-[11px] text-slate-400 mb-1">분기</label>
-            <select id="logSeason" class="w-full bg-rimDark border border-rimBorder rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
-              <option value="봄">봄 (Spring)</option>
-              <option value="여름">여름 (Summer)</option>
-              <option value="가을">가을 (Fall)</option>
-              <option value="겨울">겨울 (Winter)</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[11px] text-slate-400 mb-1">일차 (1~15일)</label>
-            <input type="number" id="logDay" value="1" min="1" max="15"
-              class="w-full bg-rimDark border border-rimBorder rounded-lg px-2.5 py-1.5 text-xs text-slate-200 text-center focus:outline-none focus:border-amber-500">
-          </div>
-          <div class="col-span-3 sm:col-span-1 flex items-end">
-            <button onclick="incrementDay()" title="다음 날로 1일 올리기" class="w-full py-1.5 px-2 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-rimBorder transition">
-              +1일 넘기기
-            </button>
-          </div>
-        </div>
+              <div class="grid-2">
+                <div>
+                  <label>유년기 배경 (Childhood)</label>
+                  <input type="text" id="pawnChildhood" placeholder="예: 길거리 고아, 부유한 귀족 자제 등">
+                </div>
+                <div>
+                  <label>성년기 배경 (Adulthood)</label>
+                  <input type="text" id="pawnAdulthood" placeholder="예: 용병 대장, 야전 외과의 등">
+                </div>
+              </div>
 
-        <!-- Incident / Log Input Area -->
-        <div class="space-y-2">
-          <textarea id="logInput" rows="2" placeholder="사건/내용을 적으세요 (예: 메카노이드 전초기지 낙하. 알렉스가 척추 파편상 입음. 식량 120개 수확 완료 등) - [Shift + Enter: 줄바꿈 / Enter: 즉시 등록]"
-            class="w-full bg-rimDark border border-rimBorder rounded-lg p-3 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition resize-none"></textarea>
-          
-          <div class="flex items-center justify-between">
-            <div class="flex flex-wrap gap-1.5">
-              <!-- Quick Tag chips to help prompt writing -->
-              <button onclick="insertTag('[습격] ')" class="text-[11px] px-2 py-0.5 rounded bg-red-950/50 hover:bg-red-900/80 text-red-300 border border-red-800/40 transition">#습격</button>
-              <button onclick="insertTag('[영입] ')" class="text-[11px] px-2 py-0.5 rounded bg-emerald-950/50 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-800/40 transition">#영입</button>
-              <button onclick="insertTag('[부상/질병] ')" class="text-[11px] px-2 py-0.5 rounded bg-amber-950/50 hover:bg-amber-900/80 text-amber-300 border border-amber-800/40 transition">#부상</button>
-              <button onclick="insertTag('[정신붕괴] ')" class="text-[11px] px-2 py-0.5 rounded bg-purple-950/50 hover:bg-purple-900/80 text-purple-300 border border-purple-800/40 transition">#정신붕괴</button>
-              <button onclick="insertTag('[축제/일상] ')" class="text-[11px] px-2 py-0.5 rounded bg-cyan-950/50 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-800/40 transition">#일상</button>
+              <div class="grid-2">
+                <div>
+                  <label>특성 (Traits)</label>
+                  <input type="text" id="pawnTraits" placeholder="예: 철의 의지, 신중한 사수, 사이코패스 (쉼표 구분)">
+                </div>
+                <div>
+                  <label>결격 사항 (Incapable)</label>
+                  <input type="text" id="pawnIncapable" placeholder="예: 폭력, 단순 노동, 예술 (쉼표 구분)">
+                </div>
+              </div>
+
+              <div>
+                <label>건강 / 신체 상태 (Health & Bionics)</label>
+                <textarea id="pawnHealth" rows="2" placeholder="예: 오른쪽 눈 상실(애꾸), 왼쪽 다리 목제 의족, 흉터 통증 등"></textarea>
+              </div>
+              <div>
+                <label>인간관계 & 사연 (Relationships)</label>
+                <textarea id="pawnRelations" rows="2" placeholder="예: '엘레나'와 연인 관계, 전우 '마커스'의 죽음으로 복수심 품음 등"></textarea>
+              </div>
             </div>
-            <button id="btnAddLog" onclick="addLog()" class="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs tracking-wide shadow flex items-center gap-1.5 transition">
-              <i class="fa-solid fa-plus"></i> 일지 추가 (Enter)
-            </button>
+
+            <!-- 12대 스탯 세로 열 (✕ 결격 토글 포함) -->
+            <div class="skills-column-panel">
+              <div class="skills-column-title">
+                기술 스탯 [✕: 결격 | 불꽃: 열정]
+              </div>
+              <div id="skillsVerticalContainer" style="display: flex; flex-direction: column; gap: 5px;">
+                <!-- 동적 생성 -->
+              </div>
+            </div>
           </div>
         </div>
-
-        <!-- Log List Items -->
-        <div class="mt-4 pt-3 border-t border-rimBorder">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">누적된 기록 목록</span>
-            <button onclick="clearLogsOnly()" class="text-[11px] text-slate-500 hover:text-red-400 transition">
-              <i class="fa-regular fa-trash-can"></i> 일지만 비우기
-            </button>
-          </div>
-          <div id="logsContainer" class="space-y-2 max-h-[190px] overflow-y-auto pr-1">
-            <!-- Dynamically populated -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Generated Prompt Preview & Quick Copy Area -->
-      <div class="bg-rimPanel rounded-xl hud-border p-4 flex-1 flex flex-col">
-        <div class="flex items-center justify-between pb-3 border-b border-rimBorder mb-3">
-          <div class="flex items-center gap-2">
-            <h2 class="text-sm font-bold uppercase tracking-wider text-amber-500 flex items-center gap-2">
-              <i class="fa-solid fa-terminal"></i> AI 소설화 완성 프롬프트
-            </h2>
-            <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-rimBorder font-mono">Real-time Markdown</span>
-          </div>
-          <button onclick="copyPromptToClipboard()" class="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs tracking-wider shadow flex items-center gap-1.5 transition">
-            <i class="fa-regular fa-copy"></i> 전체 복사 (Copy)
-          </button>
-        </div>
-
-        <div class="relative flex-1">
-          <textarea id="promptOutput" readonly class="w-full h-full min-h-[220px] bg-rimDark border border-rimBorder rounded-lg p-3 text-xs font-mono text-slate-300 focus:outline-none resize-none leading-relaxed select-all" placeholder="플레이 일지를 1건 이상 추가하면 프롬프트가 자동 조립됩니다."></textarea>
-        </div>
-      </div>
-
-    </section>
-  </main>
-
-  <div id="colonistModal" class="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-rimPanel border border-rimBorder rounded-xl max-w-md w-full p-5 hud-glow-amber">
-      <div class="flex items-center justify-between pb-3 border-b border-rimBorder mb-4">
-        <h3 id="modalTitle" class="text-base font-bold text-amber-500 flex items-center gap-2">
-          <i class="fa-solid fa-user-astronaut"></i> 정착민 등록
-        </h3>
-        <button onclick="toggleColonistModal(false)" class="text-slate-400 hover:text-slate-200">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-
-      <input type="hidden" id="modalColonistId">
-
-      <div class="space-y-3 text-sm">
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">이름 / 닉네임 *</label>
-            <input type="text" id="modalColName" placeholder="예: 알렉스 (Alex)" class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">직책 / 역할</label>
-            <input type="text" id="modalColRole" placeholder="예: 지도자, 수석 의사, 사냥꾼" class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1">특성 (Traits)</label>
-          <input type="text" id="modalColTraits" placeholder="예: 식인종, 다정함, 신속, 약물 중독" class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1">결격 사항 / 약점</label>
-          <input type="text" id="modalColIncapable" placeholder="예: 소화 불가, 폭력 불가, 왼쪽 눈 결손" class="w-full bg-rimDark border border-rimBorder rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1">인물 배경 / 성격 메모 (선택)</label>
-          <textarea id="modalColBio" rows="2" placeholder="예: 전직 해적이었으나 불시착 후 개과천선함. 신경이 날카로움." class="w-full bg-rimDark border border-rimBorder rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 resize-none"></textarea>
-        </div>
-      </div>
-
-      <div class="mt-5 flex justify-end gap-2">
-        <button onclick="toggleColonistModal(false)" class="px-4 py-2 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">취소</button>
-        <button onclick="saveColonistFromModal()" class="px-4 py-2 text-xs rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition">저장하기</button>
       </div>
     </div>
-  </div>
 
-  <div id="toast" class="fixed bottom-5 right-5 px-4 py-2.5 rounded-lg bg-slate-900 border border-emerald-500 text-emerald-400 text-xs font-semibold shadow-2xl flex items-center gap-2 transform translate-y-16 opacity-0 transition duration-300 pointer-events-none z-50">
-    <i class="fa-solid fa-circle-check"></i>
-    <span id="toastMsg">복사되었습니다!</span>
-  </div>
+    <!-- TAB 2: 일지 작성 및 복사 파트 -->
+    <div id="tab-journal" class="tab-content">
+      <div class="two-column-layout">
+        <!-- 일지 탭 좌측: 정착민 목록 사이드바 -->
+        <div class="pawn-sidebar">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
+              👥 등록 정착민 명단
+            </span>
+            <button class="btn-outline" style="padding: 2px 6px; font-size: 11px;" onclick="switchTab('pawns'); resetPawnForm();">
+              + 림 추가
+            </button>
+          </div>
+          <div class="pawn-list" id="pawnCardListTab2">
+            <!-- 동적 렌더링 -->
+          </div>
+        </div>
+
+        <!-- 일지 탭 우측: 일지 작성 및 누적 로그 영역 -->
+        <div class="journal-content-column">
+          
+          <!-- 1. 한 줄 정착지 & 날짜 입력 바 -->
+          <div class="panel-box">
+            <div class="top-single-row">
+              <div>
+                <label>정착지 이름</label>
+                <input type="text" id="colonyName" placeholder="예: 아테네 (Athens)">
+              </div>
+              <div>
+                <label>바이옴 (지형/기후)</label>
+                <input type="text" id="colonyBiome" placeholder="예: 온대림, 온대 늪지, 빙판 등">
+              </div>
+              <div>
+                <label>연도</label>
+                <input type="number" id="logYear" value="5500">
+              </div>
+              <div>
+                <label>분기</label>
+                <select id="logSeason">
+                  <option value="1분기">1분기</option>
+                  <option value="2분기">2분기</option>
+                  <option value="3분기">3분기</option>
+                  <option value="4분기">4분기</option>
+                </select>
+              </div>
+              <div>
+                <label>일차 (1~15일)</label>
+                <input type="number" id="logDay" min="1" max="15" value="1">
+              </div>
+              <div>
+                <button class="btn-outline" style="height: 35px; white-space: nowrap;" onclick="advanceOneDay()">+1일 넘기기</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. 빠른 일지 작성란 -->
+          <div class="panel-box">
+            <label>✍️ 일지 작성 (Enter 등록, Shift+Enter 줄바꿈)</label>
+            <div class="log-input-row">
+              <textarea id="logInput" placeholder="플레이 중 발생한 주요 사건(습격 방어, 자원 채굴, 부상, 인물 간 사건 등)을 기록하세요."></textarea>
+              <button class="btn-add-log" onclick="addLog()">+ 로그 추가</button>
+            </div>
+          </div>
+
+          <!-- 3. 누적 일지 로그 목록 + 우상단 전체 복사 버튼 -->
+          <div class="panel-box">
+            <div class="editor-section-title">
+              <span>📋 누적 일지 로그 기록 (<span id="logCounter">0</span>건)</span>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-outline" style="color: var(--danger);" onclick="clearAllLogs()">전체 비우기</button>
+                <button class="btn-primary" style="font-size: 13.5px; padding: 7px 16px;" onclick="copyFullChroniclePrompt()">
+                  📋 소설화 전체 복사 (Copy)
+                </button>
+              </div>
+            </div>
+            <div class="log-list" id="logItemsContainer">
+              <!-- 동적 생성 -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast">복사 완료!</div>
 
   <script>
-    // Storage Key
-    const STORAGE_KEY = 'rimworld_chronicle_data_v1';
+    const STAT_LIST = [
+      "사격", "격투", "건설", "채굴", 
+      "조리", "원예", "조련", "제작", 
+      "예술", "의학", "사교", "연구"
+    ];
 
-    // Application state
-    let state = {
-      settlement: {
-        name: '뉴 헤이븐 (New Haven)',
-        biome: '온대림 (연중 생육 가능)',
-        storyteller: '카산드라 클래식 (생존 시련)'
+    let appData = {
+      colony: {
+        name: "아테네",
+        biome: "온대림"
       },
-      options: {
-        tone: '생존의 처절함과 사실적인 긴장감',
-        pov: '전지적 작가 시점 (3인칭)',
-        notes: '전투 시 부상 상태와 정착민 사이의 사소한 대화, 긴장감을 생생하게 묘사해줘.'
-      },
-      colonists: [
-        {
-          id: 'c1',
-          name: '아서 (Arthur)',
-          role: '정착지 리더 & 건설가',
-          traits: '신중한 사수, 근면성실',
-          incapable: '예술 불가',
-          bio: '불시착선의 유일한 장교 출신으로 책임감이 강함.'
-        },
-        {
-          id: 'c2',
-          name: '발렌티나 (Valentina)',
-          role: '군의관',
-          traits: '다정함, 피에 굶주림',
-          incapable: '단순 노동 불가',
-          bio: '외과 수술 실력은 뛰어나나 다소 섬뜩한 면이 있음.'
-        }
-      ],
-      logs: [
-        {
-          id: 'l1',
-          year: 5500,
-          season: '봄',
-          day: 1,
-          content: '우주선 파편과 함께 미지의 행성에 불시착. 아서가 기본 목재 막사를 짓기 시작했다.'
-        },
-        {
-          id: 'l2',
-          year: 5500,
-          season: '봄',
-          day: 3,
-          content: '[습격] 단검을 든 광신도 1명 기습. 발렌티나가 권총으로 제압 완료. 식량 재배 구역 설정.'
-        }
-      ]
+      pawns: [],
+      logs: [],
+      currentLogDate: { year: 5500, season: "1분기", day: 1 }
     };
 
-    window.addEventListener('DOMContentLoaded', () => {
-      loadState();
-      bindInputs();
-      renderAll();
+    let selectedPawnId = null;
+    let editingLogId = null;
 
-      // Enter key shortcut for log entry
+    function init() {
+      const saved = localStorage.getItem("rimworld_chronicle_data");
+      if (saved) {
+        try {
+          appData = JSON.parse(saved);
+        } catch (e) {
+          console.error("데이터 로드 에러:", e);
+        }
+      }
+
+      if (appData.currentLogDate) {
+        if (appData.currentLogDate.season === "봄") appData.currentLogDate.season = "1분기";
+        if (appData.currentLogDate.season === "여름") appData.currentLogDate.season = "2분기";
+        if (appData.currentLogDate.season === "가을") appData.currentLogDate.season = "3분기";
+        if (appData.currentLogDate.season === "겨울") appData.currentLogDate.season = "4분기";
+      }
+
+      document.getElementById('colonyName').value = (appData.colony && appData.colony.name) || "";
+      document.getElementById('colonyBiome').value = (appData.colony && appData.colony.biome) || "";
+
+      if (appData.currentLogDate) {
+        document.getElementById('logYear').value = appData.currentLogDate.year || 5500;
+        document.getElementById('logSeason').value = appData.currentLogDate.season || "1분기";
+        document.getElementById('logDay').value = appData.currentLogDate.day || 1;
+      }
+
+      renderSkillInputs({});
+      renderBothPawnLists();
+      renderLogList();
+      updateBadges();
+
+      ['colonyName', 'colonyBiome'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+          if (!appData.colony) appData.colony = {};
+          appData.colony.name = document.getElementById('colonyName').value;
+          appData.colony.biome = document.getElementById('colonyBiome').value;
+          saveData();
+        });
+      });
+
       document.getElementById('logInput').addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           addLog();
         }
       });
-    });
-
-    function saveState() {
-      state.settlement.name = document.getElementById('settlementName').value;
-      state.settlement.biome = document.getElementById('settlementBiome').value;
-      state.settlement.storyteller = document.getElementById('settlementStoryteller').value;
-      
-      state.options.tone = document.getElementById('novelTone').value;
-      state.options.pov = document.getElementById('novelPOV').value;
-      state.options.notes = document.getElementById('novelNotes').value;
-
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
 
-    function loadState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          state = { ...state, ...parsed };
-        }
-      } catch (err) {
-        console.error("데이터 복원 실패:", err);
+    function saveData() {
+      localStorage.setItem("rimworld_chronicle_data", JSON.stringify(appData));
+    }
+
+    function manualSaveAll() {
+      if (document.getElementById('pawnFirst').value.trim() || document.getElementById('pawnNick').value.trim()) {
+        savePawn(false);
+      }
+      if (!appData.colony) appData.colony = {};
+      appData.colony.name = document.getElementById('colonyName').value;
+      appData.colony.biome = document.getElementById('colonyBiome').value;
+      saveData();
+      showToast("💾 전체 데이터가 안전하게 저장되었습니다!");
+    }
+
+    function confirmResetAll() {
+      const step1 = confirm("⚠️ 경고: 등록된 모든 정착민 정보, 작성된 일지, 정착지 데이터가 영구히 삭제됩니다.\n정말 초기화하시겠습니까?");
+      if (!step1) return;
+
+      const step2 = confirm("🚨 마지막 확인: 복구 파일(JSON 백업)이 없다면 데이터를 되돌릴 수 없습니다.\n정말로 모든 데이터를 백지 상태로 만드시겠습니까?");
+      if (!step2) return;
+
+      appData = {
+        colony: { name: "", biome: "" },
+        pawns: [],
+        logs: [],
+        currentLogDate: { year: 5500, season: "1분기", day: 1 }
+      };
+      saveData();
+      resetPawnForm();
+      init();
+      showToast("전체 데이터가 깨끗하게 초기화되었습니다.");
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+      if (tabId === 'pawns') {
+        document.getElementById('tab-pawns').classList.add('active');
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+      } else {
+        document.getElementById('tab-journal').classList.add('active');
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+      }
+      renderBothPawnLists();
+    }
+
+    /* 12개 스탯 렌더링 (✕ 결격 토글 포함) */
+    function renderSkillInputs(skillsObj) {
+      const container = document.getElementById('skillsVerticalContainer');
+      container.innerHTML = '';
+
+      STAT_LIST.forEach(stat => {
+        const item = (skillsObj && skillsObj[stat]) ? skillsObj[stat] : { level: 0, passion: 0, disabled: false };
+        const val = item.level !== undefined ? item.level : 0;
+        const passion = item.passion || 0;
+        const isDisabled = !!item.disabled;
+
+        let flameIcon = "·";
+        let flameColor = "color: #666;";
+        if (passion === 1) { flameIcon = "🔥"; flameColor = "color: #ff9800;"; }
+        if (passion === 2) { flameIcon = "🔥🔥"; flameColor = "color: #ff5722;"; }
+
+        const div = document.createElement('div');
+        div.className = `skill-card-vertical ${isDisabled ? 'disabled' : ''}`;
+        div.id = `skill_card_${stat}`;
+        div.innerHTML = `
+          <div class="skill-info">
+            <button type="button" class="btn-incapable-toggle ${isDisabled ? 'active' : ''}" 
+                    title="결격(비활성화) 토글" onclick="toggleIncapable('${stat}')" id="btn_incapable_${stat}">
+              ✕
+            </button>
+            <button type="button" class="passion-toggle" style="${flameColor}" 
+                    onclick="cyclePassion('${stat}')" id="passion_${stat}" data-passion="${passion}" ${isDisabled ? 'disabled' : ''}>
+              ${flameIcon}
+            </button>
+            <span class="skill-name">${stat}</span>
+          </div>
+          <input type="number" class="skill-input" id="skill_${stat}" min="0" max="20" value="${val}" ${isDisabled ? 'disabled' : ''}>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function toggleIncapable(stat) {
+      const card = document.getElementById(`skill_card_${stat}`);
+      const btnIncapable = document.getElementById(`btn_incapable_${stat}`);
+      const passionBtn = document.getElementById(`passion_${stat}`);
+      const input = document.getElementById(`skill_${stat}`);
+
+      const willDisable = !card.classList.contains('disabled');
+      if (willDisable) {
+        card.classList.add('disabled');
+        btnIncapable.classList.add('active');
+        passionBtn.disabled = true;
+        input.disabled = true;
+      } else {
+        card.classList.remove('disabled');
+        btnIncapable.classList.remove('active');
+        passionBtn.disabled = false;
+        input.disabled = false;
       }
     }
 
-    function bindInputs() {
-      document.getElementById('settlementName').value = state.settlement.name || '';
-      document.getElementById('settlementBiome').value = state.settlement.biome || '';
-      document.getElementById('settlementStoryteller').value = state.settlement.storyteller || '';
-      
-      document.getElementById('novelTone').value = state.options.tone || '생존의 처절함과 사실적인 긴장감';
-      document.getElementById('novelPOV').value = state.options.pov || '전지적 작가 시점 (3인칭)';
-      document.getElementById('novelNotes').value = state.options.notes || '';
+    function cyclePassion(stat) {
+      const btn = document.getElementById(`passion_${stat}`);
+      if (btn.disabled) return;
+      let p = parseInt(btn.getAttribute('data-passion') || "0");
+      p = (p + 1) % 3;
+      btn.setAttribute('data-passion', p);
+
+      if (p === 0) {
+        btn.innerHTML = "·";
+        btn.style.color = "#666";
+      } else if (p === 1) {
+        btn.innerHTML = "🔥";
+        btn.style.color = "#ff9800";
+      } else {
+        btn.innerHTML = "🔥🔥";
+        btn.style.color = "#ff5722";
+      }
     }
 
-    function renderAll() {
-      renderColonists();
-      renderLogs();
-      updatePromptPreview();
+    function resetPawnForm() {
+      selectedPawnId = null;
+      document.getElementById('pawnId').value = "";
+      document.getElementById('editorFormHeading').innerText = "새 정착민 추가";
+      document.getElementById('btnDeletePawn').style.display = 'none';
+
+      document.getElementById('pawnFirst').value = "";
+      document.getElementById('pawnNick').value = "";
+      document.getElementById('pawnLast').value = "";
+      document.getElementById('pawnGender').value = "남성";
+      document.getElementById('pawnAgeBio').value = "";
+      document.getElementById('pawnAgeChrono').value = "";
+      document.getElementById('pawnRace').value = "인간(바슬링)";
+      document.getElementById('pawnChildhood').value = "";
+      document.getElementById('pawnAdulthood').value = "";
+      document.getElementById('pawnTraits').value = "";
+      document.getElementById('pawnIncapable').value = "";
+      document.getElementById('pawnHealth').value = "";
+      document.getElementById('pawnRelations').value = "";
+
+      renderSkillInputs({});
+      renderBothPawnLists();
     }
 
-    function renderColonists() {
-      const container = document.getElementById('colonistsList');
-      const countEl = document.getElementById('colonistCount');
-      countEl.textContent = state.colonists.length;
+    function editPawn(id, openTab1 = false) {
+      const p = appData.pawns.find(x => x.id === id);
+      if (!p) return;
 
-      if (state.colonists.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-6 text-slate-500 text-xs border border-dashed border-rimBorder rounded-lg">
-            등록된 정착민이 없습니다.<br>'+ 림 추가'를 눌러 등록해보세요.
-          </div>`;
+      selectedPawnId = id;
+      document.getElementById('pawnId').value = p.id;
+      document.getElementById('editorFormHeading').innerText = `정착민 편집: ${p.nick || p.first}`;
+      document.getElementById('btnDeletePawn').style.display = 'inline-block';
+
+      document.getElementById('pawnFirst').value = p.first || "";
+      document.getElementById('pawnNick').value = p.nick || "";
+      document.getElementById('pawnLast').value = p.last || "";
+      document.getElementById('pawnGender').value = p.gender || "남성";
+      document.getElementById('pawnAgeBio').value = p.ageBio || "";
+      document.getElementById('pawnAgeChrono').value = p.ageChrono || "";
+      document.getElementById('pawnRace').value = p.race || "인간(바슬링)";
+      document.getElementById('pawnChildhood').value = p.childhood || "";
+      document.getElementById('pawnAdulthood').value = p.adulthood || "";
+      document.getElementById('pawnTraits').value = p.traits || "";
+      document.getElementById('pawnIncapable').value = p.incapable || "";
+      document.getElementById('pawnHealth').value = p.health || "";
+      document.getElementById('pawnRelations').value = p.relations || "";
+
+      renderSkillInputs(p.skills || {});
+      renderBothPawnLists();
+
+      if (openTab1) {
+        switchTab('pawns');
+      }
+    }
+
+    function savePawn(notify = true) {
+      const nick = document.getElementById('pawnNick').value.trim();
+      const first = document.getElementById('pawnFirst').value.trim();
+      const last = document.getElementById('pawnLast').value.trim();
+
+      if (!nick && !first) {
+        if (notify) alert("최소한 이름 또는 별명을 입력해주세요!");
         return;
       }
 
-      container.innerHTML = state.colonists.map(c => `
-        <div class="p-2.5 bg-rimDark/80 border border-rimBorder rounded-lg flex items-start justify-between gap-2 hover:border-slate-600 transition">
-          <div class="text-xs space-y-0.5">
-            <div class="flex items-center gap-1.5 font-bold text-slate-200">
-              <span>${escapeHtml(c.name)}</span>
-              ${c.role ? `<span class="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 font-normal border border-amber-500/30">${escapeHtml(c.role)}</span>` : ''}
-            </div>
-            ${c.traits ? `<div class="text-[11px] text-slate-400"><span class="text-slate-500">특성:</span> ${escapeHtml(c.traits)}</div>` : ''}
-            ${c.incapable ? `<div class="text-[11px] text-red-400/80"><span class="text-slate-500">결격:</span> ${escapeHtml(c.incapable)}</div>` : ''}
-            ${c.bio ? `<div class="text-[10px] text-slate-500 italic truncate max-w-[240px]">${escapeHtml(c.bio)}</div>` : ''}
-          </div>
-          <div class="flex items-center gap-1">
-            <button onclick="editColonist('${c.id}')" class="p-1 text-slate-400 hover:text-amber-400 text-xs" title="수정">
-              <i class="fa-solid fa-pen"></i>
-            </button>
-            <button onclick="deleteColonist('${c.id}')" class="p-1 text-slate-400 hover:text-red-400 text-xs" title="삭제">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
-          </div>
-        </div>
-      `).join('');
-    }
+      const skills = {};
+      STAT_LIST.forEach(stat => {
+        const card = document.getElementById(`skill_card_${stat}`);
+        const isDisabled = card ? card.classList.contains('disabled') : false;
+        const val = parseInt(document.getElementById(`skill_${stat}`).value) || 0;
+        const pBtn = document.getElementById(`passion_${stat}`);
+        const passion = parseInt(pBtn.getAttribute('data-passion') || "0");
+        skills[stat] = { level: val, passion: passion, disabled: isDisabled };
+      });
 
-    function toggleColonistModal(show) {
-      const modal = document.getElementById('colonistModal');
-      if (show) {
-        modal.classList.remove('hidden');
+      const pawnObj = {
+        id: selectedPawnId || 'pawn_' + Date.now(),
+        first: first,
+        nick: nick,
+        last: last,
+        gender: document.getElementById('pawnGender').value,
+        ageBio: document.getElementById('pawnAgeBio').value,
+        ageChrono: document.getElementById('pawnAgeChrono').value,
+        race: document.getElementById('pawnRace').value,
+        childhood: document.getElementById('pawnChildhood').value,
+        adulthood: document.getElementById('pawnAdulthood').value,
+        traits: document.getElementById('pawnTraits').value,
+        incapable: document.getElementById('pawnIncapable').value,
+        health: document.getElementById('pawnHealth').value,
+        relations: document.getElementById('pawnRelations').value,
+        skills: skills
+      };
+
+      if (selectedPawnId) {
+        const idx = appData.pawns.findIndex(x => x.id === selectedPawnId);
+        if (idx !== -1) appData.pawns[idx] = pawnObj;
       } else {
-        modal.classList.add('hidden');
-        resetColonistForm();
+        appData.pawns.push(pawnObj);
+        selectedPawnId = pawnObj.id;
       }
+
+      saveData();
+      renderBothPawnLists();
+      editPawn(selectedPawnId);
+      updateBadges();
+      if (notify) showToast("정착민 정보가 저장되었습니다.");
     }
 
-    function resetColonistForm() {
-      document.getElementById('modalColonistId').value = '';
-      document.getElementById('modalColName').value = '';
-      document.getElementById('modalColRole').value = '';
-      document.getElementById('modalColTraits').value = '';
-      document.getElementById('modalColIncapable').value = '';
-      document.getElementById('modalColBio').value = '';
-      document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-user-astronaut"></i> 정착민 등록';
+    function deleteCurrentPawn() {
+      if (!selectedPawnId) return;
+      if (!confirm("이 정착민을 명단에서 삭제하시겠습니까?")) return;
+
+      appData.pawns = appData.pawns.filter(x => x.id !== selectedPawnId);
+      saveData();
+      resetPawnForm();
+      renderBothPawnLists();
+      updateBadges();
+      showToast("정착민이 삭제되었습니다.");
     }
 
-    function saveColonistFromModal() {
-      const id = document.getElementById('modalColonistId').value;
-      const name = document.getElementById('modalColName').value.trim();
-      const role = document.getElementById('modalColRole').value.trim();
-      const traits = document.getElementById('modalColTraits').value.trim();
-      const incapable = document.getElementById('modalColIncapable').value.trim();
-      const bio = document.getElementById('modalColBio').value.trim();
+    function renderBothPawnLists() {
+      renderPawnListTo('pawnCardListTab1', false);
+      renderPawnListTo('pawnCardListTab2', true);
+    }
 
-      if (!name) {
-        showToast('정착민 이름을 입력해주세요.');
+    function renderPawnListTo(containerId, isTab2) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = "";
+
+      if (appData.pawns.length === 0) {
+        container.innerHTML = `<div style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 20px;">등록된 림이 없습니다.</div>`;
         return;
       }
 
-      if (id) {
-        // Edit existing
-        const idx = state.colonists.findIndex(c => c.id === id);
-        if (idx !== -1) {
-          state.colonists[idx] = { id, name, role, traits, incapable, bio };
-        }
-      } else {
-        // Add new
-        state.colonists.push({
-          id: 'c_' + Date.now(),
-          name, role, traits, incapable, bio
-        });
+      appData.pawns.forEach(p => {
+        const item = document.createElement('div');
+        item.className = `pawn-card-item ${p.id === selectedPawnId ? 'selected' : ''}`;
+        item.onclick = () => editPawn(p.id, isTab2);
+
+        const displayName = p.nick ? `"${p.nick}" (${p.first} ${p.last})` : `${p.first} ${p.last}`;
+        item.innerHTML = `
+          <div class="pawn-card-info">
+            <h4>${displayName}</h4>
+            <p>${p.gender} | ${p.race || '인간'} | ${p.ageBio || '?'}세</p>
+          </div>
+          <span style="font-size: 11px; color: var(--accent);">편집 ➔</span>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    /* 림 단독 정보 복사 (전체 12개 스탯 빠짐없이 복사) */
+    function copyCurrentPawnInfo() {
+      if (!selectedPawnId) {
+        alert("복사할 정착민을 목록에서 선택하거나 먼저 저장해 주세요.");
+        return;
       }
+      const p = appData.pawns.find(x => x.id === selectedPawnId);
+      if (!p) return;
 
-      saveState();
-      renderColonists();
-      updatePromptPreview();
-      toggleColonistModal(false);
-      showToast('정착민 정보가 저장되었습니다.');
+      const callSign = p.nick ? `"${p.nick}" (${p.first} ${p.last})` : `${p.first} ${p.last}`;
+      const ageInfo = p.ageChrono ? `${p.ageBio}세 (동면 연대: ${p.ageChrono}세)` : `${p.ageBio || '?'}세`;
+
+      let text = `[정착민 프로필] ${callSign}\n`;
+      text += `- 성별 / 인종: ${p.gender} / ${p.race || '일반 인간'}\n`;
+      text += `- 나이: ${ageInfo}\n`;
+      text += `- 배경: 유년기 [${p.childhood || '불명'}] / 성년기 [${p.adulthood || '불명'}]\n`;
+      text += `- 특성: ${p.traits || '없음'}\n`;
+      if (p.incapable) text += `- 결격 사항: ${p.incapable}\n`;
+      if (p.health) text += `- 신체 상태: ${p.health}\n`;
+      if (p.relations) text += `- 인간관계: ${p.relations}\n`;
+
+      text += `- 기술 스탯 (전체):\n`;
+      STAT_LIST.forEach(s => {
+        const item = (p.skills && p.skills[s]) ? p.skills[s] : { level: 0, passion: 0, disabled: false };
+        if (item.disabled) {
+          text += `  * ${s}: [결격 / 불가능]\n`;
+        } else {
+          let pIcon = item.passion === 2 ? ' 🔥🔥(열정)' : (item.passion === 1 ? ' 🔥(관심)' : '');
+          text += `  * ${s}: ${item.level}${pIcon}\n`;
+        }
+      });
+
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`[${p.nick || p.first}] 전체 스탯 프로필이 복사되었습니다!`);
+      });
     }
 
-    function editColonist(id) {
-      const col = state.colonists.find(c => c.id === id);
-      if (!col) return;
-      document.getElementById('modalColonistId').value = col.id;
-      document.getElementById('modalColName').value = col.name;
-      document.getElementById('modalColRole').value = col.role || '';
-      document.getElementById('modalColTraits').value = col.traits || '';
-      document.getElementById('modalColIncapable').value = col.incapable || '';
-      document.getElementById('modalColBio').value = col.bio || '';
-      document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-user-pen"></i> 정착민 수정';
-      toggleColonistModal(true);
+    /* 일지 기능 & 날짜 정렬 */
+    function getSeasonIndex(seasonStr) {
+      if (seasonStr === "1분기" || seasonStr === "봄") return 1;
+      if (seasonStr === "2분기" || seasonStr === "여름") return 2;
+      if (seasonStr === "3분기" || seasonStr === "가을") return 3;
+      if (seasonStr === "4분기" || seasonStr === "겨울") return 4;
+      return 1;
     }
 
-    function deleteColonist(id) {
-      state.colonists = state.colonists.filter(c => c.id !== id);
-      saveState();
-      renderColonists();
-      updatePromptPreview();
-      showToast('정착민이 명단에서 삭제되었습니다.');
+    function sortLogsChronologically() {
+      appData.logs.sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year;
+        const sA = getSeasonIndex(a.season);
+        const sB = getSeasonIndex(b.season);
+        if (sA !== sB) return sA - sB;
+        if (a.day !== b.day) return a.day - b.day;
+        return a.timestamp - b.timestamp;
+      });
     }
 
     function addLog() {
-      const input = document.getElementById('logInput');
-      const text = input.value.trim();
+      const text = document.getElementById('logInput').value.trim();
       if (!text) return;
 
       const year = parseInt(document.getElementById('logYear').value) || 5500;
       const season = document.getElementById('logSeason').value;
       const day = parseInt(document.getElementById('logDay').value) || 1;
 
-      state.logs.push({
-        id: 'l_' + Date.now(),
-        year,
-        season,
-        day,
-        content: text
-      });
+      const newLog = {
+        id: 'log_' + Date.now(),
+        year: year,
+        season: season,
+        day: day,
+        dateStr: `${year}년 ${season} ${day}일`,
+        text: text,
+        timestamp: Date.now()
+      };
 
-      input.value = '';
-      saveState();
-      renderLogs();
-      updatePromptPreview();
+      appData.logs.push(newLog);
+      appData.currentLogDate = { year, season, day };
 
-      // Scroll logs to bottom
-      const container = document.getElementById('logsContainer');
-      container.scrollTop = container.scrollHeight;
-    }
-
-    function renderLogs() {
-      const container = document.getElementById('logsContainer');
-      const countEl = document.getElementById('logCount');
-      countEl.textContent = state.logs.length;
-
-      if (state.logs.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-5 text-slate-500 text-xs border border-dashed border-rimBorder rounded-lg">
-            누적된 일지가 없습니다. 사건을 입력하고 [Enter]를 누르세요.
-          </div>`;
-        return;
-      }
-
-      container.innerHTML = state.logs.map((log, idx) => `
-        <div class="p-2.5 bg-rimDark/90 border border-rimBorder rounded-lg text-xs flex items-start justify-between gap-2 hover:border-slate-600 transition">
-          <div class="space-y-1 flex-1">
-            <div class="flex items-center gap-2">
-              <span class="font-mono text-amber-400 font-semibold text-[11px] bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-                ${log.year}년 ${log.season} ${log.day}일
-              </span>
-              <span class="text-[10px] text-slate-500 font-mono">#${idx + 1}</span>
-            </div>
-            <p class="text-slate-200 leading-relaxed break-words whitespace-pre-line">${escapeHtml(log.content)}</p>
-          </div>
-          <button onclick="deleteLog('${log.id}')" class="p-1 text-slate-500 hover:text-red-400 text-xs transition" title="로그 삭제">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-      `).join('');
+      sortLogsChronologically();
+      document.getElementById('logInput').value = "";
+      saveData();
+      renderLogList();
+      updateBadges();
+      showToast("일지가 추가되었습니다.");
     }
 
     function deleteLog(id) {
-      state.logs = state.logs.filter(l => l.id !== id);
-      saveState();
-      renderLogs();
-      updatePromptPreview();
+      appData.logs = appData.logs.filter(x => x.id !== id);
+      if (editingLogId === id) editingLogId = null;
+      saveData();
+      renderLogList();
+      updateBadges();
     }
 
-    function clearLogsOnly() {
-      if (state.logs.length === 0) return;
-      state.logs = [];
-      saveState();
-      renderLogs();
-      updatePromptPreview();
-      showToast('플레이 일지가 초기화되었습니다.');
+    function startEditLog(id) {
+      editingLogId = id;
+      renderLogList();
     }
 
-    function incrementDay() {
-      const dayInput = document.getElementById('logDay');
-      const seasonInput = document.getElementById('logSeason');
-      const yearInput = document.getElementById('logYear');
+    function cancelEditLog() {
+      editingLogId = null;
+      renderLogList();
+    }
 
-      let currentDay = parseInt(dayInput.value) || 1;
-      let currentYear = parseInt(yearInput.value) || 5500;
-      const seasons = ['봄', '여름', '가을', '겨울'];
-      let seasonIdx = seasons.indexOf(seasonInput.value);
+    function saveEditLog(id) {
+      const log = appData.logs.find(x => x.id === id);
+      if (!log) return;
 
-      if (currentDay < 15) {
-        dayInput.value = currentDay + 1;
-      } else {
-        // RimWorld 1 season = 15 days
-        dayInput.value = 1;
-        if (seasonIdx < 3) {
-          seasonInput.value = seasons[seasonIdx + 1];
+      const y = parseInt(document.getElementById(`editYear_${id}`).value) || 5500;
+      const s = document.getElementById(`editSeason_${id}`).value;
+      const d = parseInt(document.getElementById(`editDay_${id}`).value) || 1;
+      const txt = document.getElementById(`editText_${id}`).value.trim();
+
+      if (!txt) {
+        alert("일지 내용을 입력해주세요.");
+        return;
+      }
+
+      log.year = y;
+      log.season = s;
+      log.day = d;
+      log.dateStr = `${y}년 ${s} ${d}일`;
+      log.text = txt;
+
+      editingLogId = null;
+      sortLogsChronologically();
+      saveData();
+      renderLogList();
+      showToast("일지가 수정되었습니다.");
+    }
+
+    function clearAllLogs() {
+      if (appData.logs.length === 0) return;
+      if (!confirm("정말로 누적된 모든 일지 로그를 삭제하시겠습니까?")) return;
+      appData.logs = [];
+      editingLogId = null;
+      saveData();
+      renderLogList();
+      updateBadges();
+      showToast("일지가 모두 초기화되었습니다.");
+    }
+
+    function renderLogList() {
+      sortLogsChronologically();
+      const container = document.getElementById('logItemsContainer');
+      const counter = document.getElementById('logCounter');
+      counter.innerText = appData.logs.length;
+      container.innerHTML = "";
+
+      if (appData.logs.length === 0) {
+        container.innerHTML = `<div style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 24px;">기록된 일지가 없습니다. 위 입력창에서 일지를 작성해 추가해주세요.</div>`;
+        return;
+      }
+
+      appData.logs.forEach(log => {
+        const item = document.createElement('div');
+        item.className = 'log-item';
+
+        if (editingLogId === log.id) {
+          item.innerHTML = `
+            <div class="log-edit-box">
+              <div class="grid-3">
+                <div>
+                  <label>연도</label>
+                  <input type="number" id="editYear_${log.id}" value="${log.year || 5500}">
+                </div>
+                <div>
+                  <label>분기</label>
+                  <select id="editSeason_${log.id}">
+                    <option value="1분기" ${log.season === '1분기' ? 'selected' : ''}>1분기</option>
+                    <option value="2분기" ${log.season === '2분기' ? 'selected' : ''}>2분기</option>
+                    <option value="3분기" ${log.season === '3분기' ? 'selected' : ''}>3분기</option>
+                    <option value="4분기" ${log.season === '4분기' ? 'selected' : ''}>4분기</option>
+                  </select>
+                </div>
+                <div>
+                  <label>일차 (1~15일)</label>
+                  <input type="number" id="editDay_${log.id}" min="1" max="15" value="${log.day || 1}">
+                </div>
+              </div>
+              <div>
+                <label>내용</label>
+                <textarea id="editText_${log.id}" rows="3">${log.text}</textarea>
+              </div>
+              <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button class="btn-outline" onclick="cancelEditLog()">취소</button>
+                <button class="btn-primary" onclick="saveEditLog('${log.id}')">수정 완료</button>
+              </div>
+            </div>
+          `;
         } else {
-          seasonInput.value = '봄';
-          yearInput.value = currentYear + 1;
+          item.innerHTML = `
+            <div class="log-header">
+              <span class="log-date">📅 ${log.dateStr}</span>
+              <div class="log-actions">
+                <button class="btn-outline" style="padding: 2px 7px; font-size: 11px;" onclick="startEditLog('${log.id}')">수정</button>
+                <button class="btn-outline" style="padding: 2px 7px; font-size: 11px; color: var(--danger);" onclick="deleteLog('${log.id}')">삭제</button>
+              </div>
+            </div>
+            <div class="log-text">${log.text}</div>
+          `;
+        }
+
+        container.appendChild(item);
+      });
+    }
+
+    function advanceOneDay() {
+      let d = parseInt(document.getElementById('logDay').value) || 1;
+      let s = document.getElementById('logSeason').value;
+      let y = parseInt(document.getElementById('logYear').value) || 5500;
+
+      const seasons = ["1분기", "2분기", "3분기", "4분기"];
+      d++;
+      if (d > 15) {
+        d = 1;
+        let sIdx = seasons.indexOf(s);
+        if (sIdx === 3 || sIdx === -1) {
+          s = "1분기";
+          y++;
+        } else {
+          s = seasons[sIdx + 1];
         }
       }
+
+      document.getElementById('logDay').value = d;
+      document.getElementById('logSeason').value = s;
+      document.getElementById('logYear').value = y;
+      appData.currentLogDate = { year: y, season: s, day: d };
+      saveData();
     }
 
-    function insertTag(tag) {
-      const input = document.getElementById('logInput');
-      input.value = tag + input.value;
-      input.focus();
-    }
+    /* 전체 소설화 프롬프트 생성 (전체 12개 스탯 빠짐없이 포함) */
+    function copyFullChroniclePrompt() {
+      const colony = appData.colony || {};
+      let prompt = `당신은 공상과학 생존 시뮬레이션 게임 **'림월드(RimWorld)'**의 세계관과 정착지 연대기를 집필하는 전문 SF 스토리텔러 소설가입니다.\n`;
+      prompt += `아래에 제공된 **[정착지 환경]**, **[등장 정착민 프로필]**, 그리고 날짜순 **[플레이 일지 기록]**을 바탕으로 한 편의 몰입감 넘치는 SF 소설(에피소드)을 작성해 주세요.\n\n`;
 
-    function updatePromptPreview() {
-      const settlement = state.settlement;
-      const options = state.options;
+      prompt += `### [작성 지침]\n`;
+      prompt += `1. **분위기 & 톤**: 림월드 특유의 거칠고 황량한 변방계 행성 서바이벌 분위기를 극대화할 것 (고립감, 긴장감, 블랙 코미디, 생존을 위한 투쟁).\n`;
+      prompt += `2. **인물 생동감**: 정착민들의 배경 이야기(유년기/성년기), 성격 특성, 신체 결함, 전문 능력치(스탯/열정)와 결격 사항을 사건 해결이나 대화 속에 자연스럽게 녹여낼 것.\n`;
+      prompt += `3. **서사 구조**: 제공된 일지 사건들을 단순 나열하지 말고, 날짜 흐름에 따라 정착민들의 시점과 대화, 심리 묘사, 현장감 있는 액션 씬이 살아있는 완결성 있는 이야기로 재구성할 것.\n\n`;
 
-      let prompt = `당신은 노련하고 필력이 뛰어난 SF 생존 웹소설 작가입니다.
-아래에 제공되는 샌드박스 SF 생존 게임 '림월드(RimWorld)'의 실제 플레이 일지와 정착민 프로필을 바탕으로, 몰입감 넘치고 흥미진진한 챕터형 단편 소설을 집필해주세요.
+      prompt += `---\n\n`;
+      prompt += `### 1. 정착지 및 세계관 환경\n`;
+      prompt += `- **정착지 명칭**: ${colony.name || "미정"}\n`;
+      prompt += `- **바이옴 및 지형**: ${colony.biome || "변방계 행성"}\n\n`;
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[ 1. 정착지 및 세계관 배경 ]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- 정착지명: ${settlement.name || '미정'}
-- 기후/바이옴: ${settlement.biome || '미정'}
-- 스토리텔러 & 난이도: ${settlement.storyteller || '미정'}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[ 2. 주요 등장인물 (정착민 명단) ]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-
-      if (state.colonists.length === 0) {
-        prompt += `- (별도 등록 인물 없음: 플레이 로그에 언급된 인물 위주로 묘사)\n`;
+      prompt += `### 2. 주요 등장 정착민 (림) 명단\n`;
+      if (appData.pawns.length === 0) {
+        prompt += `*(등록된 정착민 프로필이 없습니다. 무명의 생존자들로 묘사해 주세요.)*\n\n`;
       } else {
-        state.colonists.forEach(c => {
-          prompt += `* **${c.name}** [${c.role || '정착민'}]\n`;
-          if (c.traits) prompt += `  - 특성: ${c.traits}\n`;
-          if (c.incapable) prompt += `  - 결격사항/특이점: ${c.incapable}\n`;
-          if (c.bio) prompt += `  - 인물 배경: ${c.bio}\n`;
+        appData.pawns.forEach((p, idx) => {
+          const callSign = p.nick ? `"${p.nick}" (${p.first} ${p.last})` : `${p.first} ${p.last}`;
+          const ageInfo = p.ageChrono ? `${p.ageBio}세 (동면 연대: ${p.ageChrono}세)` : `${p.ageBio || '?'}세`;
+          
+          prompt += `#### [정착민 ${idx + 1}] ${callSign}\n`;
+          prompt += `- **성별 / 인종**: ${p.gender} / ${p.race || '일반 인간'}\n`;
+          prompt += `- **나이**: ${ageInfo}\n`;
+          prompt += `- **성장 배경**: 유년기 [${p.childhood || '불명'}] / 성년기 [${p.adulthood || '불명'}]\n`;
+          prompt += `- **성격 특성**: ${p.traits || '특이사항 없음'}\n`;
+          if (p.incapable) prompt += `- **결격 사항**: ${p.incapable}\n`;
+          if (p.health) prompt += `- **건강 / 신체 부위 상태**: ${p.health}\n`;
+          if (p.relations) prompt += `- **인간관계 및 사연**: ${p.relations}\n`;
+
+          // 전체 12개 스탯 출력
+          prompt += `- **기술 스탯 (전체)**:\n`;
+          STAT_LIST.forEach(s => {
+            const item = (p.skills && p.skills[s]) ? p.skills[s] : { level: 0, passion: 0, disabled: false };
+            if (item.disabled) {
+              prompt += `  * ${s}: [결격 / 불가능]\n`;
+            } else {
+              let pIcon = item.passion === 2 ? ' 🔥🔥(열정)' : (item.passion === 1 ? ' 🔥(관심)' : '');
+              prompt += `  * ${s}: ${item.level}${pIcon}\n`;
+            }
+          });
+          prompt += `\n`;
         });
       }
 
-      prompt += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[ 3. 시간순 플레이 일지 기록 ]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-
-      if (state.logs.length === 0) {
-        prompt += `(아직 기록된 일지가 없습니다. 웹페이지 상단에서 플레이 일지를 추가하세요.)\n`;
+      prompt += `### 3. 실제 플레이 일지 기록 (연대기 순)\n`;
+      if (appData.logs.length === 0) {
+        prompt += `*(기록된 사건 로그가 없습니다. 변방계 정착 첫날의 생존기를 상상하여 작성해 주세요.)*\n`;
       } else {
-        state.logs.forEach(l => {
-          prompt += `* [${l.year}년 ${l.season} ${l.day}일] : ${l.content}\n`;
+        sortLogsChronologically();
+        appData.logs.forEach(l => {
+          prompt += `- **[${l.dateStr}]**: ${l.text}\n`;
         });
       }
 
-      prompt += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[ 4. 소설 집필 지침 (필수 준수) ]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. **문체 및 분위기**: ${options.tone}
-2. **서술 시점**: ${options.pov}
-3. **스토리텔링 가이드**:
-   - 단순히 일지를 시간 순으로 요약하는 것이 아니라, 현장감 넘치는 생생한 장면(대화, 심리 묘사, 거친 변방계 환경의 냄새와 소리, 위기 상황의 촉박함)으로 극화해주세요.
-   - 림월드 특유의 냉혹한 자연재해, 부조리한 습격, 질병, 그리고 그 속에서 피어나는 정착민들 사이의 유대감을 균형 있게 다루어주세요.
-   - 각 정착민의 특성과 성격이 대사와 행동 양식에 뚜렷하게 반영되도록 해주세요.
-${options.notes ? `4. **추가 요청**: ${options.notes}\n` : ''}
-자, 위의 기록들을 바탕으로 완성도 높은 소설 한 편을 작성해 주세요.`;
+      prompt += `\n---\n위 기록들을 유기적으로 엮어 실감 나는 SF 연대기 소설로 완성해 주세요!`;
 
-      document.getElementById('promptOutput').value = prompt;
+      navigator.clipboard.writeText(prompt).then(() => {
+        showToast("전체 소설화 프롬프트가 복사되었습니다!");
+      }).catch(() => {
+        const dummy = document.createElement("textarea");
+        document.body.appendChild(dummy);
+        dummy.value = prompt;
+        dummy.select();
+        document.execCommand("copy");
+        document.body.removeChild(dummy);
+        showToast("전체 소설화 프롬프트가 복사되었습니다!");
+      });
     }
 
-    function copyPromptToClipboard() {
-      const promptEl = document.getElementById('promptOutput');
-      promptEl.select();
-      promptEl.setSelectionRange(0, 99999);
-
-      try {
-        const successful = document.execCommand('copy');
-        if (successful) {
-          showToast('프롬프트가 클립보드에 복사되었습니다! AI에 바로 붙여넣으세요.');
-        } else {
-          showToast('복사에 실패했습니다. 수동으로 복사해주세요.');
-        }
-      } catch (err) {
-        showToast('복사 기능을 실행할 수 없습니다.');
-      }
+    function updateBadges() {
+      document.getElementById('pawn-count-badge').innerText = appData.pawns.length;
+      document.getElementById('log-count-badge').innerText = appData.logs.length;
     }
 
     function showToast(msg) {
       const toast = document.getElementById('toast');
-      const toastMsg = document.getElementById('toastMsg');
-      toastMsg.textContent = msg;
-
-      toast.classList.remove('opacity-0', 'translate-y-16');
-      toast.classList.add('opacity-100', 'translate-y-0');
-
-      setTimeout(() => {
-        toast.classList.remove('opacity-100', 'translate-y-0');
-        toast.classList.add('opacity-0', 'translate-y-16');
-      }, 2500);
+      toast.innerText = msg;
+      toast.className = "show";
+      setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2200);
     }
 
     function exportData() {
-      saveState();
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `rimworld_chronicle_${Date.now()}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      showToast('백업 파일(.json)이 다운로드되었습니다.');
+      const json = JSON.stringify(appData, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `RimWorld_Chronicle_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
-    function importData(event) {
-      const file = event.target.files[0];
+    function importData(e) {
+      const file = e.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function(evt) {
         try {
-          const imported = JSON.parse(e.target.result);
-          if (imported && imported.settlement && imported.logs) {
-            state = imported;
-            saveState();
-            bindInputs();
-            renderAll();
-            showToast('데이터가 성공적으로 복원되었습니다.');
+          const parsed = JSON.parse(evt.target.result);
+          if (parsed && (parsed.pawns || parsed.logs)) {
+            appData = parsed;
+            saveData();
+            init();
+            showToast("데이터 복구가 완료되었습니다!");
           } else {
-            showToast('유효하지 않은 데이터 형식입니다.');
+            alert("올바른 백업 파일 형식이 아닙니다.");
           }
         } catch (err) {
-          showToast('파일을 읽는 중 오류가 발생했습니다.');
+          alert("파일 파싱 실패: " + err.message);
         }
       };
       reader.readAsText(file);
-      event.target.value = '';
     }
 
-    function confirmResetAll() {
-      // Avoid browser native confirm() - in-place safe confirm via state flag
-      const btn = event.currentTarget;
-      if (btn.dataset.confirming === 'true') {
-        state.settlement = { name: '', biome: '', storyteller: '' };
-        state.colonists = [];
-        state.logs = [];
-        state.options = {
-          tone: '생존의 처절함과 사실적인 긴장감',
-          pov: '전지적 작가 시점 (3인칭)',
-          notes: ''
-        };
-        localStorage.removeItem(STORAGE_KEY);
-        bindInputs();
-        renderAll();
-        btn.dataset.confirming = 'false';
-        btn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> 전체 초기화';
-        showToast('모든 데이터가 초기화되었습니다.');
-      } else {
-        btn.dataset.confirming = 'true';
-        btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> 진짜 삭제? (다시 클릭)';
-        setTimeout(() => {
-          btn.dataset.confirming = 'false';
-          btn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> 전체 초기화';
-        }, 3000);
-      }
-    }
-
-    function escapeHtml(string) {
-      if (!string) return '';
-      return String(string)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
+    window.onload = init;
   </script>
 </body>
 </html>
