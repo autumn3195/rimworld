@@ -196,6 +196,29 @@
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .age-stage-options {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-height: 34px;
+    }
+    .age-stage-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin: 0;
+      font-size: 12px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .age-stage-option input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 
     /* Buttons */
     .btn-primary {
@@ -242,7 +265,7 @@
     /* 공통 2열 레이아웃 */
     .two-column-layout {
       display: grid;
-      grid-template-columns: 280px 1fr;
+      grid-template-columns: 380px 1fr;
       gap: 20px;
       align-items: start;
     }
@@ -259,20 +282,81 @@
     .pawn-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 12px;
       max-height: 720px;
       overflow-y: auto;
+    }
+    .pawn-status-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .pawn-status-group-title {
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 5px 8px;
+      border-left: 3px solid var(--text-muted);
+      border-radius: 4px;
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+    }
+    .pawn-status-group.status-alive .pawn-status-group-title {
+      color: var(--success);
+      border-left-color: var(--success);
+      background: rgba(63,185,80,0.10);
+    }
+    .pawn-status-group.status-injured .pawn-status-group-title {
+      color: #e5a73b;
+      border-left-color: #e5a73b;
+      background: rgba(229,167,59,0.10);
+    }
+    .pawn-status-group.status-dead .pawn-status-group-title {
+      color: var(--danger);
+      border-left-color: var(--danger);
+      background: rgba(207,69,59,0.10);
+    }
+    .pawn-status-group-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
     }
     .pawn-card-item {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 10px 12px;
-      cursor: pointer;
+      padding: 8px 9px;
+      cursor: grab;
       transition: all 0.2s;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      min-width: 0;
+    }
+    .pawn-card-item:active {
+      cursor: grabbing;
+    }
+    .pawn-card-item.dragging {
+      opacity: 0.45;
+      border-color: var(--accent);
+    }
+    .pawn-card-item.drag-over {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+    .pawn-card-item .pawn-card-info {
+      min-width: 0;
+      width: 100%;
+    }
+    .pawn-card-item .pawn-card-info h4,
+    .pawn-card-item .pawn-card-info p {
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: keep-all;
+    }
+    .pawn-card-item .pawn-card-edit {
+      display: none;
     }
     .pawn-card-item:hover {
       border-color: var(--accent);
@@ -290,6 +374,67 @@
       font-size: 11px;
       color: var(--text-muted);
     }
+
+    .pawn-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+      font-size: 10.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .pawn-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      flex-shrink: 0;
+    }
+    .pawn-status.status-injured { color: #e5a73b; }
+    .pawn-status.status-injured .pawn-status-dot { background: #e5a73b; }
+    .pawn-status.status-dead { color: var(--danger); }
+    .pawn-status.status-dead .pawn-status-dot { background: var(--danger); }
+
+    .status-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 10px;
+      flex-shrink: 0;
+    }
+    .status-option {
+      border: 0;
+      background: transparent;
+      color: var(--text-muted);
+      padding: 2px 4px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      transition: color 0.15s, background 0.15s;
+    }
+    .status-option:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.05);
+    }
+    .status-option .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #666;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
+    }
+    .status-option[data-status="생존"].active { color: var(--success); }
+    .status-option[data-status="생존"].active .status-dot { background: var(--success); }
+    .status-option[data-status="부상"].active { color: #e5a73b; }
+    .status-option[data-status="부상"].active .status-dot { background: #e5a73b; }
+    .status-option[data-status="사망"].active { color: var(--danger); }
+    .status-option[data-status="사망"].active .status-dot { background: var(--danger); }
 
     .panel-box {
       background: var(--bg-panel);
@@ -401,6 +546,29 @@
       font-weight: 600;
       font-size: 13px;
     }
+    .skill-values {
+      display: flex; align-items: center; gap: 4px; margin-left: auto;
+    }
+    .skill-value-label { font-size: 9px; color: var(--text-muted); }
+    .skill-input.initial, .skill-input.current { width: 42px; text-align: center; padding: 3px 4px; font-size: 12px; }
+    .skills-growth-chart { margin-top: 10px; padding: 10px; background: #171b21; border: 1px solid var(--border); border-radius: 6px; }
+    .skills-growth-chart-title { display:flex; align-items:center; justify-content:space-between; font-size:11.5px; font-weight:800; color:var(--text); margin-bottom:5px; }
+    .skills-growth-chart-title span { font-size:9px; font-weight:600; color:var(--text-muted); }
+    .skills-growth-legend { display:flex; justify-content:flex-end; gap:10px; margin-bottom:8px; font-size:9px; color:var(--text-muted); }
+    .skills-growth-legend span { display:inline-flex; align-items:center; gap:4px; }
+    .skills-growth-legend i { width:14px; height:6px; border-radius:2px; display:inline-block; }
+    .legend-initial { background:#68717d; }
+    .legend-current { background:var(--accent); }
+    #skillsGrowthChartRows { display:flex; flex-direction:column; gap:7px; }
+    .growth-chart-row { display:grid; grid-template-columns:34px 1fr 22px; gap:6px; align-items:center; }
+    .growth-chart-skill { font-size:10px; font-weight:700; color:var(--text-muted); text-align:right; }
+    .growth-chart-bars { display:flex; flex-direction:column; gap:3px; min-width:0; }
+    .growth-chart-track { position:relative; width:100%; height:9px; background:#0f1217; border-radius:4px; overflow:hidden; border:1px solid rgba(255,255,255,0.07); }
+    .growth-chart-fill { height:100%; width:0; border-radius:3px; transition:width .15s ease; }
+    .growth-chart-fill.initial { background:#68717d; }
+    .growth-chart-fill.current { background:var(--accent); }
+    .growth-chart-values { display:flex; flex-direction:column; gap:3px; font-size:9px; font-variant-numeric:tabular-nums; text-align:right; color:var(--text-muted); line-height:9px; }
+    .growth-chart-values .current-value { color:var(--text); font-weight:700; }
     .passion-toggle {
       background: transparent;
       border: none;
@@ -551,6 +719,14 @@
       opacity: 1;
     }
 
+    @media (max-width: 700px) {
+      .status-inline { margin-left: 6px; gap: 2px; }
+      .status-option { padding: 2px; }
+      .status-option .status-dot { width: 7px; height: 7px; }
+      .status-option { font-size: 0; }
+      .status-option .status-dot { display: inline-block; }
+    }
+
     @media (max-width: 1100px) {
       .two-column-layout { grid-template-columns: 1fr; }
       .pawn-editor-body { grid-template-columns: 1fr; }
@@ -611,9 +787,22 @@
         <!-- 우측: 림 인게임 캐릭터 시트 에디터 -->
         <div class="panel-box">
           <div class="editor-section-title">
-            <span id="editorFormHeading">정착민 상세 정보 편집</span>
+            <div style="display: flex; align-items: center; min-width: 0;">
+              <span id="editorFormHeading">정착민 상세 정보 편집</span>
+              <div class="status-inline" id="pawnStatusSelector">
+                <button type="button" class="status-option" data-status="생존" onclick="selectPawnStatus('생존')">
+                  <span class="status-dot"></span>생존
+                </button>
+                <button type="button" class="status-option" data-status="부상" onclick="selectPawnStatus('부상')">
+                  <span class="status-dot"></span>부상
+                </button>
+                <button type="button" class="status-option" data-status="사망" onclick="selectPawnStatus('사망')">
+                  <span class="status-dot"></span>사망
+                </button>
+              </div>
+              <input type="hidden" id="pawnStatus" value="생존">
+            </div>
             <div style="display: flex; gap: 8px;">
-              <button class="btn-secondary" onclick="copyAllPawnsInfo()">👥 전체 림 복사</button>
               <button class="btn-secondary" id="btnCopyPawn" onclick="copyCurrentPawnInfo()">📋 선택 림 복사</button>
               <button class="btn-danger" id="btnDeletePawn" style="display: none;" onclick="deleteCurrentPawn()">삭제</button>
               <button class="btn-primary" onclick="savePawn()">정착민 저장</button>
@@ -647,7 +836,7 @@
                 </div>
               </div>
 
-              <div class="grid-3">
+              <div class="grid-4">
                 <div>
                   <label>생체 나이</label>
                   <input type="number" id="pawnAgeBio" placeholder="예: 28" min="0">
@@ -657,8 +846,15 @@
                   <input type="number" id="pawnAgeChrono" placeholder="예: 142" min="0">
                 </div>
                 <div>
+                  <label>성인 / 어린이</label>
+                  <div class="age-stage-options">
+                    <label class="age-stage-option"><input type="checkbox" id="pawnAdult" onchange="togglePawnAgeStage('adult')"> 성인</label>
+                    <label class="age-stage-option"><input type="checkbox" id="pawnChild" onchange="togglePawnAgeStage('child')"> 어린이</label>
+                  </div>
+                </div>
+                <div>
                   <label>인종 / 제노타입</label>
-                  <input type="text" id="pawnRace" placeholder="기본 인간 (바슬링), 예퍼 등">
+                  <input type="text" id="pawnRace" placeholder="예: 인간, 예퍼 등">
                 </div>
               </div>
 
@@ -701,6 +897,14 @@
               </div>
               <div id="skillsVerticalContainer" style="display: flex; flex-direction: column; gap: 5px;">
                 <!-- 동적 생성 -->
+              </div>
+              <div class="skills-growth-chart">
+                <div class="skills-growth-chart-title">스탯 변화 그래프 <span>0–20</span></div>
+                <div class="skills-growth-legend">
+                  <span><i class="legend-initial"></i>초기</span>
+                  <span><i class="legend-current"></i>현재</span>
+                </div>
+                <div id="skillsGrowthChartRows"></div>
               </div>
             </div>
           </div>
@@ -815,6 +1019,28 @@
     let selectedPawnId = null;
     let editingLogId = null;
 
+    const VALID_PAWN_STATUSES = ["생존", "부상", "사망"];
+    const PAWN_STATUS_ORDER = { "생존": 0, "부상": 1, "사망": 2 };
+
+    function normalizePawnStatus(status) {
+      return VALID_PAWN_STATUSES.includes(status) ? status : "생존";
+    }
+
+    function selectPawnStatus(status) {
+      status = normalizePawnStatus(status);
+      document.getElementById('pawnStatus').value = status;
+      document.querySelectorAll('#pawnStatusSelector .status-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === status);
+      });
+    }
+
+    function getPawnStatusClass(status) {
+      status = normalizePawnStatus(status);
+      if (status === '부상') return 'status-injured';
+      if (status === '사망') return 'status-dead';
+      return '';
+    }
+
     function init() {
       const saved = localStorage.getItem("rimworld_chronicle_data");
       if (saved) {
@@ -824,6 +1050,14 @@
           console.error("데이터 로드 에러:", e);
         }
       }
+
+      if (!appData.colony) appData.colony = { name: "", biome: "" };
+      if (!Array.isArray(appData.pawns)) appData.pawns = [];
+      if (!Array.isArray(appData.logs)) appData.logs = [];
+
+      appData.pawns.forEach(pawn => {
+        pawn.status = normalizePawnStatus(pawn.status);
+      });
 
       if (appData.currentLogDate) {
         if (appData.currentLogDate.season === "봄") appData.currentLogDate.season = "1분기";
@@ -842,6 +1076,7 @@
       }
 
       renderSkillInputs({});
+      selectPawnStatus("생존");
       renderBothPawnLists();
       renderLogList();
       updateBadges();
@@ -864,6 +1099,9 @@
     }
 
     function saveData() {
+      appData.pawns.forEach(pawn => {
+        pawn.status = normalizePawnStatus(pawn.status);
+      });
       localStorage.setItem("rimworld_chronicle_data", JSON.stringify(appData));
     }
 
@@ -917,8 +1155,10 @@
       container.innerHTML = '';
 
       STAT_LIST.forEach(stat => {
-        const item = (skillsObj && skillsObj[stat]) ? skillsObj[stat] : { level: 0, passion: 0, disabled: false };
-        const val = item.level !== undefined ? item.level : 0;
+        const item = (skillsObj && skillsObj[stat]) ? skillsObj[stat] : { level: 0, levelInitial: 0, levelCurrent: 0, passion: 0, disabled: false };
+        const rawCurrentVal = item.levelCurrent !== undefined ? item.levelCurrent : (item.level !== undefined ? item.level : 0);
+        const initialVal = Math.max(0, Math.min(20, Number(item.levelInitial !== undefined ? item.levelInitial : rawCurrentVal) || 0));
+        const currentVal = Math.max(initialVal, Math.max(0, Math.min(20, Number(rawCurrentVal) || 0)));
         const passion = item.passion || 0;
         const isDisabled = !!item.disabled;
 
@@ -942,48 +1182,109 @@
             </button>
             <span class="skill-name">${stat}</span>
           </div>
-          <input type="number" class="skill-input" id="skill_${stat}" min="0" max="20" value="${val}" ${isDisabled ? 'disabled' : ''}>
+          <div class="skill-values">
+            <span class="skill-value-label">초기</span>
+            <input type="number" class="skill-input initial" id="skill_initial_${stat}" min="0" max="20" value="${initialVal}" ${isDisabled ? 'disabled' : ''} oninput="updateSkillBars('${stat}')">
+            <span class="skill-value-label">현재</span>
+            <input type="number" class="skill-input current" id="skill_${stat}" min="${initialVal}" max="20" value="${currentVal}" ${isDisabled ? 'disabled' : ''} oninput="updateSkillBars('${stat}')">
+          </div>
         `;
         container.appendChild(div);
       });
+      renderSkillGrowthChart();
+    }
+
+    function renderSkillGrowthChart() {
+      const chart = document.getElementById('skillsGrowthChartRows');
+      if (!chart) return;
+      chart.innerHTML = '';
+      STAT_LIST.forEach(stat => {
+        const initialEl = document.getElementById(`skill_initial_${stat}`);
+        const currentEl = document.getElementById(`skill_${stat}`);
+        const card = document.getElementById(`skill_card_${stat}`);
+        const isDisabled = !!card?.classList.contains('disabled');
+        const initial = isDisabled ? 0 : Math.max(0, Math.min(20, parseInt(initialEl?.value) || 0));
+        const current = isDisabled ? 0 : Math.max(0, Math.min(20, parseInt(currentEl?.value) || 0));
+        const row = document.createElement('div');
+        row.className = 'growth-chart-row';
+        row.innerHTML = `
+          <div class="growth-chart-skill">${stat}</div>
+          <div class="growth-chart-bars">
+            <div class="growth-chart-track"><div class="growth-chart-fill initial" id="skill_initial_bar_${stat}" style="width:${(initial / 20) * 100}%"></div></div>
+            <div class="growth-chart-track"><div class="growth-chart-fill current" id="skill_current_bar_${stat}" style="width:${(current / 20) * 100}%"></div></div>
+          </div>
+          <div class="growth-chart-values">
+            <span id="skill_initial_bar_value_${stat}">${initial}</span>
+            <span class="current-value" id="skill_current_bar_value_${stat}">${current}</span>
+          </div>`;
+        chart.appendChild(row);
+      });
+    }
+
+    function updateSkillBars(stat) {
+      const initialEl = document.getElementById(`skill_initial_${stat}`);
+      const currentEl = document.getElementById(`skill_${stat}`);
+      const initialBar = document.getElementById(`skill_initial_bar_${stat}`);
+      const currentBar = document.getElementById(`skill_current_bar_${stat}`);
+      const initialValue = document.getElementById(`skill_initial_bar_value_${stat}`);
+      const currentValue = document.getElementById(`skill_current_bar_value_${stat}`);
+      if (!initialEl || !currentEl) return;
+
+      const card = document.getElementById(`skill_card_${stat}`);
+      const isDisabled = !!card?.classList.contains('disabled');
+      let initial = Math.max(0, Math.min(20, parseInt(initialEl.value) || 0));
+      let current = Math.max(0, Math.min(20, parseInt(currentEl.value) || 0));
+
+      // 현재 능력치는 초기 능력치보다 낮아질 수 없다.
+      if (current < initial) {
+        current = initial;
+        currentEl.value = current;
+      }
+      currentEl.min = initial;
+
+      // 결격 스킬은 입력값을 보존하되 그래프에서는 완전히 0으로 표시한다.
+      const displayInitial = isDisabled ? 0 : initial;
+      const displayCurrent = isDisabled ? 0 : current;
+      if (initialBar) initialBar.style.width = `${(displayInitial / 20) * 100}%`;
+      if (currentBar) currentBar.style.width = `${(displayCurrent / 20) * 100}%`;
+      if (initialValue) initialValue.textContent = displayInitial;
+      if (currentValue) currentValue.textContent = displayCurrent;
     }
 
     function toggleIncapable(stat) {
       const card = document.getElementById(`skill_card_${stat}`);
       const btnIncapable = document.getElementById(`btn_incapable_${stat}`);
       const passionBtn = document.getElementById(`passion_${stat}`);
-      const input = document.getElementById(`skill_${stat}`);
+      const initialInput = document.getElementById(`skill_initial_${stat}`);
+      const currentInput = document.getElementById(`skill_${stat}`);
+      if (!card || !btnIncapable || !passionBtn || !initialInput || !currentInput) return;
 
       const willDisable = !card.classList.contains('disabled');
-      if (willDisable) {
-        card.classList.add('disabled');
-        btnIncapable.classList.add('active');
-        passionBtn.disabled = true;
-        input.disabled = true;
-      } else {
-        card.classList.remove('disabled');
-        btnIncapable.classList.remove('active');
-        passionBtn.disabled = false;
-        input.disabled = false;
-      }
+      card.classList.toggle('disabled', willDisable);
+      btnIncapable.classList.toggle('active', willDisable);
+      passionBtn.disabled = willDisable;
+      initialInput.disabled = willDisable;
+      currentInput.disabled = willDisable;
+      updateSkillBars(stat);
     }
 
     function cyclePassion(stat) {
       const btn = document.getElementById(`passion_${stat}`);
-      if (btn.disabled) return;
-      let p = parseInt(btn.getAttribute('data-passion') || "0");
+      if (!btn || btn.disabled) return;
+
+      let p = parseInt(btn.getAttribute('data-passion') || '0');
       p = (p + 1) % 3;
       btn.setAttribute('data-passion', p);
 
       if (p === 0) {
-        btn.innerHTML = "·";
-        btn.style.color = "#666";
+        btn.innerHTML = '·';
+        btn.style.color = '#666';
       } else if (p === 1) {
-        btn.innerHTML = "🔥";
-        btn.style.color = "#ff9800";
+        btn.innerHTML = '🔥';
+        btn.style.color = '#ff9800';
       } else {
-        btn.innerHTML = "🔥🔥";
-        btn.style.color = "#ff5722";
+        btn.innerHTML = '🔥🔥';
+        btn.style.color = '#ff5722';
       }
     }
 
@@ -997,9 +1298,12 @@
       document.getElementById('pawnNick').value = "";
       document.getElementById('pawnLast').value = "";
       document.getElementById('pawnGender').value = "남성";
+      selectPawnStatus("생존");
       document.getElementById('pawnAgeBio').value = "";
       document.getElementById('pawnAgeChrono').value = "";
-      document.getElementById('pawnRace').value = "인간(바슬링)";
+      document.getElementById('pawnAdult').checked = true;
+      document.getElementById('pawnChild').checked = false;
+      document.getElementById('pawnRace').value = "인간";
       document.getElementById('pawnChildhood').value = "";
       document.getElementById('pawnAdulthood').value = "";
       document.getElementById('pawnTraits').value = "";
@@ -1024,9 +1328,13 @@
       document.getElementById('pawnNick').value = p.nick || "";
       document.getElementById('pawnLast').value = p.last || "";
       document.getElementById('pawnGender').value = p.gender || "남성";
+      selectPawnStatus(p.status);
       document.getElementById('pawnAgeBio').value = p.ageBio || "";
       document.getElementById('pawnAgeChrono').value = p.ageChrono || "";
-      document.getElementById('pawnRace').value = p.race || "인간(바슬링)";
+      const isChild = p.ageStage === '어린이' || p.isChild === true;
+      document.getElementById('pawnAdult').checked = !isChild;
+      document.getElementById('pawnChild').checked = isChild;
+      document.getElementById('pawnRace').value = p.race || "인간";
       document.getElementById('pawnChildhood').value = p.childhood || "";
       document.getElementById('pawnAdulthood').value = p.adulthood || "";
       document.getElementById('pawnTraits').value = p.traits || "";
@@ -1056,10 +1364,13 @@
       STAT_LIST.forEach(stat => {
         const card = document.getElementById(`skill_card_${stat}`);
         const isDisabled = card ? card.classList.contains('disabled') : false;
-        const val = parseInt(document.getElementById(`skill_${stat}`).value) || 0;
+        const initialVal = Math.max(0, Math.min(20, parseInt(document.getElementById(`skill_initial_${stat}`).value) || 0));
+        const currentInput = document.getElementById(`skill_${stat}`);
+        const currentVal = Math.max(initialVal, Math.max(0, Math.min(20, parseInt(currentInput.value) || 0)));
+        currentInput.value = currentVal;
         const pBtn = document.getElementById(`passion_${stat}`);
         const passion = parseInt(pBtn.getAttribute('data-passion') || "0");
-        skills[stat] = { level: val, passion: passion, disabled: isDisabled };
+        skills[stat] = { level: currentVal, levelInitial: initialVal, levelCurrent: currentVal, passion: passion, disabled: isDisabled };
       });
 
       const pawnObj = {
@@ -1068,8 +1379,10 @@
         nick: nick,
         last: last,
         gender: document.getElementById('pawnGender').value,
+        status: normalizePawnStatus(document.getElementById('pawnStatus').value),
         ageBio: document.getElementById('pawnAgeBio').value,
         ageChrono: document.getElementById('pawnAgeChrono').value,
+        ageStage: document.getElementById('pawnChild').checked ? '어린이' : '성인',
         race: document.getElementById('pawnRace').value,
         childhood: document.getElementById('pawnChildhood').value,
         adulthood: document.getElementById('pawnAdulthood').value,
@@ -1114,6 +1427,39 @@
       if (countEl) countEl.innerText = appData.pawns.length;
     }
 
+    let draggedPawnId = null;
+
+    function reorderPawnWithinStatus(draggedId, targetId) {
+      if (!draggedId || !targetId || draggedId === targetId) return;
+
+      const draggedPawn = appData.pawns.find(p => p.id === draggedId);
+      const targetPawn = appData.pawns.find(p => p.id === targetId);
+      if (!draggedPawn || !targetPawn) return;
+
+      const draggedStatus = normalizePawnStatus(draggedPawn.status);
+      const targetStatus = normalizePawnStatus(targetPawn.status);
+      if (draggedStatus !== targetStatus) return;
+
+      const statusPawns = appData.pawns.filter(p => normalizePawnStatus(p.status) === draggedStatus);
+      const orderedIds = statusPawns.map(p => p.id);
+      const fromIndex = orderedIds.indexOf(draggedId);
+      const toIndex = orderedIds.indexOf(targetId);
+      if (fromIndex < 0 || toIndex < 0) return;
+
+      orderedIds.splice(fromIndex, 1);
+      orderedIds.splice(toIndex, 0, draggedId);
+
+      const reorderedStatusPawns = orderedIds.map(id => appData.pawns.find(p => p.id === id));
+      let statusIndex = 0;
+      appData.pawns = appData.pawns.map(p => {
+        if (normalizePawnStatus(p.status) !== draggedStatus) return p;
+        return reorderedStatusPawns[statusIndex++];
+      });
+
+      saveData();
+      renderBothPawnLists();
+    }
+
     function renderPawnListTo(containerId, isTab2) {
       const container = document.getElementById(containerId);
       if (!container) return;
@@ -1124,20 +1470,82 @@
         return;
       }
 
-      appData.pawns.forEach(p => {
-        const item = document.createElement('div');
-        item.className = `pawn-card-item ${p.id === selectedPawnId ? 'selected' : ''}`;
-        item.onclick = () => editPawn(p.id, isTab2);
+      const sortedPawns = appData.pawns
+        .map((p, index) => ({ p, index }))
+        .sort((a, b) => {
+          const statusA = normalizePawnStatus(a.p.status);
+          const statusB = normalizePawnStatus(b.p.status);
+          return PAWN_STATUS_ORDER[statusA] - PAWN_STATUS_ORDER[statusB] || a.index - b.index;
+        })
+        .map(item => item.p);
 
-        const displayName = p.nick ? `"${p.nick}" (${p.first} ${p.last})` : `${p.first} ${p.last}`;
-        item.innerHTML = `
-          <div class="pawn-card-info">
-            <h4>${displayName}</h4>
-            <p>${p.gender} | ${p.race || '인간'} | ${p.ageBio || '?'}세</p>
-          </div>
-          <span style="font-size: 11px; color: var(--accent);">편집 ➔</span>
-        `;
-        container.appendChild(item);
+      const groups = { "생존": [], "부상": [], "사망": [] };
+      sortedPawns.forEach(p => groups[normalizePawnStatus(p.status)].push(p));
+
+      Object.entries(groups).forEach(([status, pawns]) => {
+        if (pawns.length === 0) return;
+
+        const group = document.createElement('div');
+        const groupClass = status === '생존' ? 'status-alive' : status === '부상' ? 'status-injured' : 'status-dead';
+        group.className = `pawn-status-group ${groupClass}`;
+        group.innerHTML = `<div class="pawn-status-group-title">${status}</div>`;
+
+        const grid = document.createElement('div');
+        grid.className = 'pawn-status-group-grid';
+
+        pawns.forEach(p => {
+          const item = document.createElement('div');
+          item.className = `pawn-card-item ${p.id === selectedPawnId ? 'selected' : ''}`;
+          item.draggable = true;
+          item.dataset.pawnId = p.id;
+          item.onclick = () => editPawn(p.id, isTab2);
+
+          item.addEventListener('dragstart', (e) => {
+            draggedPawnId = p.id;
+            item.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', p.id);
+          });
+
+          item.addEventListener('dragend', () => {
+            draggedPawnId = null;
+            document.querySelectorAll('.pawn-card-item.dragging, .pawn-card-item.drag-over').forEach(el => {
+              el.classList.remove('dragging', 'drag-over');
+            });
+          });
+
+          item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (!draggedPawnId || draggedPawnId === p.id) return;
+            const dragged = appData.pawns.find(pawn => pawn.id === draggedPawnId);
+            if (!dragged || normalizePawnStatus(dragged.status) !== status) return;
+            e.dataTransfer.dropEffect = 'move';
+            item.classList.add('drag-over');
+          });
+
+          item.addEventListener('dragleave', () => {
+            item.classList.remove('drag-over');
+          });
+
+          item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            item.classList.remove('drag-over');
+            const dropId = e.dataTransfer.getData('text/plain') || draggedPawnId;
+            reorderPawnWithinStatus(dropId, p.id);
+          });
+
+          const displayName = p.nick || [p.first, p.last].filter(Boolean).join(' ') || '이름 없음';
+          item.innerHTML = `
+            <div class="pawn-card-info">
+              <h4>${displayName}</h4>
+              <p>${p.race || '인간'} · ${p.gender || '알 수 없음'}</p>
+            </div>
+          `;
+          grid.appendChild(item);
+        });
+
+        group.appendChild(grid);
+        container.appendChild(group);
       });
     }
 
@@ -1148,7 +1556,9 @@
       const ageInfo = p.ageChrono ? `${p.ageBio}세 (동면 연대: ${p.ageChrono}세)` : `${p.ageBio || '?'}세`;
 
       let text = `${prefix}${callSign}\n`;
+      text += `- 현재 상태: ${normalizePawnStatus(p.status)}\n`;
       text += `- 성별 / 인종: ${p.gender} / ${p.race || '일반 인간'}\n`;
+      text += `- 연령 구분: ${p.ageStage || (p.isChild ? '어린이' : '성인')}\n`;
       text += `- 나이: ${ageInfo}\n`;
       text += `- 배경: 유년기 [${p.childhood || '불명'}] / 성년기 [${p.adulthood || '불명'}]\n`;
       text += `- 특성: ${p.traits || '없음'}\n`;
@@ -1162,8 +1572,10 @@
         if (item.disabled) {
           text += `  * ${s}: [결격 / 불가능]\n`;
         } else {
+          const currentVal = item.levelCurrent !== undefined ? item.levelCurrent : (item.level !== undefined ? item.level : 0);
+          const initialVal = item.levelInitial !== undefined ? item.levelInitial : currentVal;
           let pIcon = item.passion === 2 ? ' 🔥🔥(열정)' : (item.passion === 1 ? ' 🔥(관심)' : '');
-          text += `  * ${s}: ${item.level}${pIcon}\n`;
+          text += `  * ${s}: 초기 ${initialVal} → 현재 ${currentVal}${pIcon}\n`;
         }
       });
       return text;
