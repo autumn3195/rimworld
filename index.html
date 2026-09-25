@@ -603,15 +603,21 @@
     }
     .relationship-chip-main {
       min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
       overflow-wrap: anywhere;
     }
     .relationship-chip-target {
+      display: block;
       font-weight: 800;
       color: var(--accent);
+      line-height: 1.25;
     }
-    .relationship-chip-separator {
-      color: var(--text-muted);
-      margin: 0 3px;
+    .relationship-chip-content {
+      display: block;
+      color: var(--text);
+      line-height: 1.35;
     }
     .relationship-chip-actions {
       display: inline-flex;
@@ -798,6 +804,14 @@
       font-family: var(--font-mono);
       font-weight: bold;
     }
+    .log-item.season-q1, .chronicle-source-log.season-q1 { border-left-color: #f38fb8; }
+    .log-item.season-q2, .chronicle-source-log.season-q2 { border-left-color: #5ecb72; }
+    .log-item.season-q3, .chronicle-source-log.season-q3 { border-left-color: #e45757; }
+    .log-item.season-q4, .chronicle-source-log.season-q4 { border-left-color: #5b8ff9; }
+    .log-item.season-q1 .log-date, .chronicle-source-log.season-q1 .chronicle-source-date { color: #f38fb8; }
+    .log-item.season-q2 .log-date, .chronicle-source-log.season-q2 .chronicle-source-date { color: #5ecb72; }
+    .log-item.season-q3 .log-date, .chronicle-source-log.season-q3 .chronicle-source-date { color: #e45757; }
+    .log-item.season-q4 .log-date, .chronicle-source-log.season-q4 .chronicle-source-date { color: #5b8ff9; }
     .log-actions {
       display: flex;
       gap: 6px;
@@ -850,10 +864,202 @@
       .status-option .status-dot { display: inline-block; }
     }
 
+
+    /* 연대기 / 소설 관리 */
+    .chronicle-layout {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    .chronicle-sidebar {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: calc(100vh - 115px);
+      overflow-y: auto;
+    }
+    .chronicle-chapter { display: flex; flex-direction: column; gap: 6px; }
+    .chronicle-chapter-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--accent);
+      padding: 6px 8px;
+      background: rgba(88,166,255,0.08);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .chronicle-chapter-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .chronicle-chapter-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .chronicle-chapter-action {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 10.5px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .chronicle-chapter-action:hover { border-color: var(--accent); color: var(--text); }
+    .chronicle-chapter-episodes { display: flex; flex-direction: column; gap: 6px; }
+    .chronicle-chapter-episodes.collapsed { display: none; }
+    .chronicle-episode-item {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      border-radius: 6px;
+      padding: 8px 9px;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+    .chronicle-episode-item:hover,
+    .chronicle-episode-item.selected { border-color: var(--accent); }
+    .chronicle-episode-item.selected { background: rgba(88,166,255,0.08); }
+    .chronicle-episode-no { font-size: 11px; color: var(--text-muted); margin-bottom: 3px; }
+    .chronicle-episode-title { font-size: 12.5px; font-weight: 700; line-height: 1.35; }
+    .chronicle-editor { display: flex; flex-direction: column; gap: 14px; }
+    .chronicle-meta-grid {
+      display: grid;
+      grid-template-columns: 110px 110px minmax(0, 1fr);
+      gap: 10px;
+      align-items: end;
+    }
+    .chronicle-source-box {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      border-radius: 7px;
+      overflow: hidden;
+    }
+    .chronicle-source-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 11px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+    .chronicle-source-head:hover { background: rgba(255,255,255,0.025); }
+    .chronicle-source-head-right { display: flex; align-items: center; gap: 8px; }
+    .chronicle-source-toggle {
+      border: 1px solid var(--border);
+      background: var(--bg-panel);
+      color: var(--text-muted);
+      border-radius: 5px;
+      padding: 2px 7px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .chronicle-source-toggle:hover { color: var(--text); border-color: var(--accent); }
+    .chronicle-source-list {
+      max-height: 360px;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .chronicle-source-list.collapsed { display: none; }
+    .chronicle-source-log {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    .chronicle-source-log:hover { background: #272d36; }
+    .chronicle-source-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .chronicle-source-date {
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .chronicle-source-actions {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex: 0 0 auto;
+    }
+    .chronicle-source-action {
+      border: 1px solid var(--border);
+      background: var(--bg-panel);
+      color: var(--text-muted);
+      border-radius: 5px;
+      padding: 3px 7px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .chronicle-source-action:hover { color: var(--text); border-color: var(--accent); }
+    .chronicle-source-action.delete:hover { color: var(--danger); border-color: var(--danger); }
+    .chronicle-source-text { font-size: 13.5px; color: var(--text); }
+    .chronicle-source-edit-grid {
+      display: grid;
+      grid-template-columns: 110px 110px 90px;
+      gap: 7px;
+    }
+    .chronicle-source-edit-grid input,
+    .chronicle-source-edit-text {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .chronicle-source-edit-text {
+      min-height: 90px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+    .chronicle-source-edit-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+    .chronicle-novel-textarea { min-height: 430px; resize: vertical; line-height: 1.65; }
+    .chronicle-empty {
+      color: var(--text-muted);
+      font-size: 12px;
+      text-align: center;
+      padding: 30px 12px;
+    }
+    .log-select-wrap { display: flex; align-items: flex-start; gap: 8px; }
+    .log-select-checkbox { margin-top: 3px; width: 15px; height: 15px; accent-color: var(--accent); flex: 0 0 auto; }
+     .journal-selection-tools { display: flex; gap: 5px; align-items: center; flex-wrap: nowrap; white-space: nowrap; }
+    .journal-selection-tools button { padding: 5px 8px; font-size: 11.5px; min-width: 0; white-space: nowrap; }
+    .journal-selection-tools select { flex: 0 1 150px; min-width: 135px !important; max-width: 165px; }
+
     @media (max-width: 1100px) {
       .two-column-layout { grid-template-columns: 1fr; }
       .pawn-editor-body { grid-template-columns: 1fr; }
       .top-single-row { grid-template-columns: 1fr 1fr; }
+      .chronicle-layout { grid-template-columns: 1fr; }
+      .chronicle-meta-grid { grid-template-columns: 1fr 1fr; }
+      .chronicle-meta-grid > div:last-child { grid-column: 1 / -1; }
     }
   </style>
 </head>
@@ -871,6 +1077,9 @@
       </button>
       <button class="tab-btn" onclick="switchTab('journal')">
         📖 일지 작성 및 복사 <span class="badge" id="log-count-badge">0</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('chronicle')">
+        📚 연대기 / 소설 관리 <span class="badge" id="chronicle-count-badge">0</span>
       </button>
     </nav>
 
@@ -1124,11 +1333,16 @@
           <div class="panel-box">
             <div class="editor-section-title">
               <span>📋 누적 일지 로그 기록 (<span id="logCounter">0</span>건)</span>
-              <div style="display: flex; gap: 8px;">
+              <div class="journal-selection-tools">
+                <button class="btn-outline" onclick="toggleAllLogSelection(true)">전체 선택</button>
+                <button class="btn-outline" onclick="toggleAllLogSelection(false)">선택 해제</button>
+                <select id="existingEpisodeTarget" style="width:auto; min-width:135px; height:31px; padding:3px 8px; font-size:12px;" title="선택한 로그를 추가할 기존 화">
+                  <option value="">기존 화 선택</option>
+                </select>
+                <button class="btn-secondary" onclick="addSelectedLogsToExistingEpisode()">➕ 기존 화에 추가</button>
+                <button class="btn-secondary" onclick="createEpisodeFromSelectedLogs()">📚 새 화에 저장</button>
                 <button class="btn-outline" style="color: var(--danger);" onclick="clearAllLogs()">전체 비우기</button>
-                <button class="btn-primary" style="font-size: 13.5px; padding: 7px 16px;" onclick="copyRawLogsOnly()">
-                  📋 전체 일지 복사 (Copy)
-                </button>
+                <button class="btn-primary" style="" onclick="copyRawLogsOnly()">📋 전체 일지 복사 (Copy)</button>
               </div>
             </div>
             <div class="log-list" id="logItemsContainer">
@@ -1137,6 +1351,70 @@
           </div>
 
         </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 3: 연대기 / 소설 관리 -->
+    <div id="tab-chronicle" class="tab-content">
+      <div class="chronicle-layout">
+        <aside class="chronicle-sidebar">
+          <button class="btn-primary" style="width:100%; justify-content:center;" onclick="createBlankEpisode()">➕ 새 화 만들기</button>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <span style="font-size:11.5px; color:var(--text-muted); font-weight:700;">📚 저장된 연대기</span>
+            <span style="font-size:11px; color:var(--text-muted);"><span id="chronicleSidebarCount">0</span>화</span>
+          </div>
+          <div id="chronicleEpisodeList"></div>
+        </aside>
+
+        <section class="chronicle-editor">
+          <div class="panel-box">
+            <div class="editor-section-title">
+              <span id="chronicleEditorHeading">화 편집</span>
+              <div style="display:flex; gap:8px;">
+                <button class="btn-outline" onclick="copyChronicleSourceLogs()">📋 원본 로그 복사</button>
+                <button class="btn-outline" onclick="copyChronicleNovel()">📄 소설 본문 복사</button>
+                <button class="btn-danger" id="btnDeleteEpisode" onclick="deleteCurrentEpisode()">삭제</button>
+                <button class="btn-primary" onclick="saveChronicleEpisode()">화 저장</button>
+              </div>
+            </div>
+            <input type="hidden" id="chronicleEpisodeId">
+            <div class="chronicle-meta-grid">
+              <div>
+                <label>장</label>
+                <input type="number" id="chronicleChapter" min="1" value="1">
+              </div>
+              <div>
+                <label>화</label>
+                <input type="number" id="chronicleEpisode" min="1" value="1">
+              </div>
+              <div>
+                <label>화 제목</label>
+                <input type="text" id="chronicleTitle" placeholder="예: 추락한 사람들">
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-box">
+            <div class="chronicle-source-box">
+              <div class="chronicle-source-head" onclick="toggleChronicleSourceLogs()" title="원본 로그 접기/펼치기">
+                <span>🗒️ 이 화의 원본 로그 <span style="color:var(--text-muted); font-weight:500;">(저장 당시 스냅샷)</span></span>
+                <div class="chronicle-source-head-right">
+                  <span id="chronicleSourceCount" style="color:var(--text-muted); font-weight:500;">0건</span>
+                  <button type="button" class="chronicle-source-toggle" id="chronicleSourceToggle" onclick="event.stopPropagation(); toggleChronicleSourceLogs()">▲ 접기</button>
+                </div>
+              </div>
+              <div class="chronicle-source-list" id="chronicleSourceList">
+                <div class="chronicle-empty">이 화에 저장된 원본 로그가 없습니다.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-box">
+            <label>✍️ 소설 본문</label>
+            <textarea id="chronicleNovelText" class="chronicle-novel-textarea" placeholder="ChatGPT로 작성한 소설 본문을 이곳에 붙여넣거나 직접 작성하세요."></textarea>
+          </div>
+        </section>
       </div>
     </div>
   </main>
@@ -1157,11 +1435,16 @@
       },
       pawns: [],
       logs: [],
+      chronicle: [],
+      chapterMeta: {},
       currentLogDate: { year: 5500, season: "1분기", day: 1 }
     };
 
     let selectedPawnId = null;
     let editingLogId = null;
+    let selectedChronicleEpisodeId = null;
+    let chronicleDraftSourceLogs = [];
+    const selectedLogIds = new Set();
 
     const VALID_PAWN_STATUSES = ["생존", "부상", "사망"];
     const PAWN_STATUS_ORDER = { "생존": 0, "부상": 1, "사망": 2 };
@@ -1198,6 +1481,8 @@
       if (!appData.colony) appData.colony = { name: "", biome: "" };
       if (!Array.isArray(appData.pawns)) appData.pawns = [];
       if (!Array.isArray(appData.logs)) appData.logs = [];
+      if (!Array.isArray(appData.chronicle)) appData.chronicle = [];
+      if (!appData.chapterMeta || typeof appData.chapterMeta !== 'object' || Array.isArray(appData.chapterMeta)) appData.chapterMeta = {};
 
       appData.pawns.forEach(pawn => {
         pawn.status = normalizePawnStatus(pawn.status);
@@ -1223,6 +1508,8 @@
       selectPawnStatus("생존");
       renderBothPawnLists();
       renderLogList();
+      renderChronicleList();
+      resetChronicleEditor();
       updateBadges();
 
       ['colonyName', 'colonyBiome'].forEach(id => {
@@ -1261,7 +1548,7 @@
     }
 
     function confirmResetAll() {
-      const step1 = confirm("⚠️ 경고: 등록된 모든 정착민 정보, 작성된 일지, 정착지 데이터가 영구히 삭제됩니다.\n정말 초기화하시겠습니까?");
+      const step1 = confirm("⚠️ 경고: 등록된 모든 정착민 정보, 작성된 일지, 연대기/소설, 정착지 데이터가 영구히 삭제됩니다.\n정말 초기화하시겠습니까?");
       if (!step1) return;
 
       const step2 = confirm("🚨 마지막 확인: 복구 파일(JSON 백업)이 없다면 데이터를 되돌릴 수 없습니다.\n정말로 모든 데이터를 백지 상태로 만드시겠습니까?");
@@ -1271,6 +1558,8 @@
         colony: { name: "", biome: "" },
         pawns: [],
         logs: [],
+        chronicle: [],
+        chapterMeta: {},
         currentLogDate: { year: 5500, season: "1분기", day: 1 }
       };
       saveData();
@@ -1283,13 +1572,13 @@
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
-      if (tabId === 'pawns') {
-        document.getElementById('tab-pawns').classList.add('active');
-        document.querySelectorAll('.tab-btn')[0].classList.add('active');
-      } else {
-        document.getElementById('tab-journal').classList.add('active');
-        document.querySelectorAll('.tab-btn')[1].classList.add('active');
-      }
+      const tabMap = { pawns: 0, journal: 1, chronicle: 2 };
+      const target = document.getElementById(`tab-${tabId}`);
+      if (target) target.classList.add('active');
+      const btn = document.querySelectorAll('.tab-btn')[tabMap[tabId] ?? 0];
+      if (btn) btn.classList.add('active');
+
+      if (tabId === 'chronicle') renderChronicleList();
       renderBothPawnLists();
     }
 
@@ -1557,8 +1846,7 @@
         <span class="relationship-chip">
           <span class="relationship-chip-main">
             <span class="relationship-chip-target">${escapeHtml(item.target || '대상 없음')}</span>
-            <span class="relationship-chip-separator">—</span>
-            <span>${escapeHtml(item.content || '내용 없음')}</span>
+            <span class="relationship-chip-content">${escapeHtml(item.content || '내용 없음')}</span>
           </span>
           <span class="relationship-chip-actions">
             <button type="button" class="relationship-chip-btn" onclick="editRelationship(${index})" title="편집">✏</button>
@@ -1959,6 +2247,14 @@
     }
 
     /* 일지 기능 & 날짜 정렬 */
+    function getSeasonClass(seasonStr) {
+      if (seasonStr === "1분기" || seasonStr === "봄") return "season-q1";
+      if (seasonStr === "2분기" || seasonStr === "여름") return "season-q2";
+      if (seasonStr === "3분기" || seasonStr === "가을") return "season-q3";
+      if (seasonStr === "4분기" || seasonStr === "겨울") return "season-q4";
+      return "";
+    }
+
     function getSeasonIndex(seasonStr) {
       if (seasonStr === "1분기" || seasonStr === "봄") return 1;
       if (seasonStr === "2분기" || seasonStr === "여름") return 2;
@@ -2009,6 +2305,7 @@
 
     function deleteLog(id) {
       appData.logs = appData.logs.filter(x => x.id !== id);
+      selectedLogIds.delete(id);
       if (editingLogId === id) editingLogId = null;
       saveData();
       renderLogList();
@@ -2056,6 +2353,7 @@
       if (appData.logs.length === 0) return;
       if (!confirm("정말로 누적된 모든 일지 로그를 삭제하시겠습니까?")) return;
       appData.logs = [];
+      selectedLogIds.clear();
       editingLogId = null;
       saveData();
       renderLogList();
@@ -2077,7 +2375,7 @@
 
       appData.logs.forEach(log => {
         const item = document.createElement('div');
-        item.className = 'log-item';
+        item.className = `log-item ${getSeasonClass(log.season)}`.trim();
 
         if (editingLogId === log.id) {
           item.innerHTML = `
@@ -2112,7 +2410,11 @@
             </div>
           `;
         } else {
+          const isSelected = selectedLogIds.has(log.id);
           item.innerHTML = `
+            <div class="log-select-wrap">
+              <input type="checkbox" class="log-select-checkbox" ${isSelected ? 'checked' : ''} onchange="setLogSelection('${log.id}', this.checked)" title="소설화할 로그 선택">
+              <div style="flex:1; min-width:0;">
             <div class="log-header">
               <span class="log-date">📅 ${log.dateStr}</span>
               <div class="log-actions">
@@ -2121,6 +2423,8 @@
               </div>
             </div>
             <div class="log-text">${log.text}</div>
+              </div>
+            </div>
           `;
         }
 
@@ -2153,6 +2457,440 @@
       saveData();
     }
 
+
+    /* ===== 연대기 / 소설 관리 ===== */
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function setLogSelection(id, checked) {
+      if (checked) selectedLogIds.add(id);
+      else selectedLogIds.delete(id);
+    }
+
+    function toggleAllLogSelection(checked) {
+      selectedLogIds.clear();
+      if (checked) appData.logs.forEach(log => selectedLogIds.add(log.id));
+      renderLogList();
+    }
+
+    function getNextEpisodePosition() {
+      if (!appData.chronicle.length) return { chapter: 1, episode: 1 };
+      const sorted = [...appData.chronicle].sort((a,b) => (a.chapter-b.chapter) || (a.episode-b.episode));
+      const last = sorted[sorted.length - 1];
+      const chapter = Number(last.chapter) || 1;
+      const maxEpisode = Math.max(...appData.chronicle.filter(x => (Number(x.chapter)||1) === chapter).map(x => Number(x.episode)||1));
+      return { chapter, episode: maxEpisode + 1 };
+    }
+
+    function cloneLogSnapshot(log) {
+      return {
+        id: log.id,
+        year: log.year,
+        season: log.season,
+        day: log.day,
+        dateStr: log.dateStr || `${log.year}년 ${log.season} ${log.day}일`,
+        text: log.text,
+        timestamp: log.timestamp
+      };
+    }
+
+    function renderExistingEpisodeTargetOptions() {
+      const select = document.getElementById('existingEpisodeTarget');
+      if (!select) return;
+      const previous = select.value;
+      const sorted = [...appData.chronicle].sort((a,b) =>
+        (Number(a.chapter)-Number(b.chapter)) ||
+        (Number(a.episode)-Number(b.episode)) ||
+        ((a.createdAt||0)-(b.createdAt||0))
+      );
+      select.innerHTML = '<option value="">기존 화 선택</option>' + sorted.map(ep => {
+        const chapter = Number(ep.chapter) || 1;
+        const episode = Number(ep.episode) || 1;
+        const title = ep.title ? ` · ${escapeHtml(ep.title)}` : '';
+        return `<option value="${escapeHtml(ep.id)}">${chapter}장 ${episode}화${title}</option>`;
+      }).join('');
+      if (sorted.some(ep => ep.id === previous)) select.value = previous;
+      select.disabled = sorted.length === 0;
+    }
+
+    function getChronicleLogIdentity(log) {
+      if (log && log.id) return `id:${log.id}`;
+      return `legacy:${log?.year || ''}|${log?.season || ''}|${log?.day || ''}|${log?.text || ''}`;
+    }
+
+    function addSelectedLogsToExistingEpisode() {
+      const picked = appData.logs.filter(log => selectedLogIds.has(log.id));
+      if (!picked.length) {
+        alert('기존 화에 추가할 로그를 먼저 선택해주세요.');
+        return;
+      }
+
+      const select = document.getElementById('existingEpisodeTarget');
+      const targetId = select ? select.value : '';
+      if (!targetId) {
+        alert('로그를 추가할 기존 화를 선택해주세요.');
+        return;
+      }
+
+      const target = appData.chronicle.find(ep => ep.id === targetId);
+      if (!target) {
+        alert('선택한 화를 찾을 수 없습니다.');
+        renderExistingEpisodeTargetOptions();
+        return;
+      }
+
+      if (!Array.isArray(target.sourceLogs)) target.sourceLogs = [];
+      const existingKeys = new Set(target.sourceLogs.map(getChronicleLogIdentity));
+      const snapshots = picked.map(cloneLogSnapshot);
+      const toAdd = snapshots.filter(log => !existingKeys.has(getChronicleLogIdentity(log)));
+      const duplicateCount = snapshots.length - toAdd.length;
+
+      if (!toAdd.length) {
+        alert('선택한 로그가 이미 해당 화에 모두 저장되어 있습니다.');
+        return;
+      }
+
+      target.sourceLogs.push(...toAdd);
+      target.updatedAt = Date.now();
+      saveData();
+      selectedLogIds.clear();
+      renderLogList();
+      renderChronicleList();
+      if (selectedChronicleEpisodeId === target.id) loadChronicleEpisode(target.id);
+
+      const label = `${Number(target.chapter)||1}장 ${Number(target.episode)||1}화`;
+      const duplicateNote = duplicateCount ? ` (중복 ${duplicateCount}건 제외)` : '';
+      showToast(`${label}에 원본 로그 ${toAdd.length}건을 추가했습니다.${duplicateNote}`);
+    }
+
+    function createEpisodeFromSelectedLogs() {
+      const picked = appData.logs.filter(log => selectedLogIds.has(log.id));
+      if (!picked.length) {
+        alert('새 화로 저장할 로그를 먼저 선택해주세요.');
+        return;
+      }
+      const pos = getNextEpisodePosition();
+      const now = Date.now();
+      const episode = {
+        id: 'episode_' + now,
+        chapter: pos.chapter,
+        episode: pos.episode,
+        title: '',
+        sourceLogs: picked.map(cloneLogSnapshot),
+        novelText: '',
+        createdAt: now,
+        updatedAt: now
+      };
+      appData.chronicle.push(episode);
+      saveData();
+      selectedLogIds.clear();
+      selectedChronicleEpisodeId = episode.id;
+      loadChronicleEpisode(episode.id);
+      renderLogList();
+      renderChronicleList();
+      updateBadges();
+      switchTab('chronicle');
+      showToast(`${episode.chapter}장 ${episode.episode}화에 원본 로그 ${picked.length}건을 저장했습니다.`);
+    }
+
+    function createBlankEpisode() {
+      const pos = getNextEpisodePosition();
+      selectedChronicleEpisodeId = null;
+      chronicleDraftSourceLogs = [];
+      editingChronicleSourceLogIndex = null;
+      document.getElementById('chronicleEpisodeId').value = '';
+      document.getElementById('chronicleChapter').value = pos.chapter;
+      document.getElementById('chronicleEpisode').value = pos.episode;
+      document.getElementById('chronicleTitle').value = '';
+      document.getElementById('chronicleNovelText').value = '';
+      document.getElementById('chronicleEditorHeading').innerText = '새 화 작성';
+      document.getElementById('btnDeleteEpisode').style.display = 'none';
+      renderChronicleSourceLogs([]);
+      renderChronicleList();
+    }
+
+    function resetChronicleEditor() {
+      if (appData.chronicle.length) {
+        const sorted = [...appData.chronicle].sort((a,b) => (a.chapter-b.chapter) || (a.episode-b.episode));
+        loadChronicleEpisode(sorted[0].id);
+      } else {
+        createBlankEpisode();
+      }
+    }
+
+    function loadChronicleEpisode(id) {
+      const ep = appData.chronicle.find(x => x.id === id);
+      if (!ep) return;
+      selectedChronicleEpisodeId = id;
+      chronicleDraftSourceLogs = Array.isArray(ep.sourceLogs) ? ep.sourceLogs.map(x => ({...x})) : [];
+      editingChronicleSourceLogIndex = null;
+      document.getElementById('chronicleEpisodeId').value = ep.id;
+      document.getElementById('chronicleChapter').value = Number(ep.chapter) || 1;
+      document.getElementById('chronicleEpisode').value = Number(ep.episode) || 1;
+      document.getElementById('chronicleTitle').value = ep.title || '';
+      document.getElementById('chronicleNovelText').value = ep.novelText || '';
+      document.getElementById('chronicleEditorHeading').innerText = `${Number(ep.chapter)||1}장 ${Number(ep.episode)||1}화 편집`;
+      document.getElementById('btnDeleteEpisode').style.display = '';
+      renderChronicleSourceLogs(chronicleDraftSourceLogs);
+      renderChronicleList();
+    }
+
+    let chronicleSourceExpanded = true;
+
+    function toggleChronicleSourceLogs(forceState) {
+      const container = document.getElementById('chronicleSourceList');
+      const button = document.getElementById('chronicleSourceToggle');
+      if (!container || !button) return;
+
+      chronicleSourceExpanded = typeof forceState === 'boolean' ? forceState : !chronicleSourceExpanded;
+      container.classList.toggle('collapsed', !chronicleSourceExpanded);
+      button.innerText = chronicleSourceExpanded ? '▲ 접기' : '▼ 펼치기';
+    }
+
+    let editingChronicleSourceLogIndex = null;
+
+    function persistChronicleDraftSourceLogs() {
+      const id = document.getElementById('chronicleEpisodeId').value;
+      if (!id) return;
+      const ep = appData.chronicle.find(x => x.id === id);
+      if (!ep) return;
+      ep.sourceLogs = chronicleDraftSourceLogs.map(x => ({...x}));
+      ep.updatedAt = Date.now();
+      saveData();
+    }
+
+    function startEditChronicleSourceLog(index) {
+      if (!chronicleDraftSourceLogs[index]) return;
+      editingChronicleSourceLogIndex = index;
+      renderChronicleSourceLogs(chronicleDraftSourceLogs);
+    }
+
+    function cancelEditChronicleSourceLog() {
+      editingChronicleSourceLogIndex = null;
+      renderChronicleSourceLogs(chronicleDraftSourceLogs);
+    }
+
+    function saveEditedChronicleSourceLog(index) {
+      const log = chronicleDraftSourceLogs[index];
+      if (!log) return;
+      const year = parseInt(document.getElementById(`chronicleSourceYear_${index}`).value) || log.year || 5500;
+      const season = document.getElementById(`chronicleSourceSeason_${index}`).value.trim() || log.season || '1분기';
+      const day = Math.max(1, parseInt(document.getElementById(`chronicleSourceDay_${index}`).value) || log.day || 1);
+      const text = document.getElementById(`chronicleSourceText_${index}`).value.trim();
+      if (!text) {
+        alert('로그 내용을 입력해주세요.');
+        return;
+      }
+      log.year = year;
+      log.season = season;
+      log.day = day;
+      log.dateStr = `${year}년 ${season} ${day}일`;
+      log.text = text;
+      editingChronicleSourceLogIndex = null;
+      persistChronicleDraftSourceLogs();
+      renderChronicleSourceLogs(chronicleDraftSourceLogs);
+      showToast('이 화에 보관된 원본 로그를 수정했습니다.');
+    }
+
+    function deleteChronicleSourceLog(index) {
+      const log = chronicleDraftSourceLogs[index];
+      if (!log) return;
+      const label = log.dateStr || `${log.year}년 ${log.season} ${log.day}일`;
+      if (!confirm(`${label} 원본 로그를 이 화에서 삭제하시겠습니까?\n일지 탭의 원본 로그에는 영향을 주지 않습니다.`)) return;
+      chronicleDraftSourceLogs.splice(index, 1);
+      if (editingChronicleSourceLogIndex === index) editingChronicleSourceLogIndex = null;
+      else if (editingChronicleSourceLogIndex !== null && editingChronicleSourceLogIndex > index) editingChronicleSourceLogIndex--;
+      persistChronicleDraftSourceLogs();
+      renderChronicleSourceLogs(chronicleDraftSourceLogs);
+      showToast('이 화에 보관된 원본 로그를 삭제했습니다.');
+    }
+
+    function renderChronicleSourceLogs(logs) {
+      const container = document.getElementById('chronicleSourceList');
+      const count = document.getElementById('chronicleSourceCount');
+      if (!container || !count) return;
+      count.innerText = `${logs.length}건`;
+      if (!logs.length) {
+        container.innerHTML = '<div class="chronicle-empty">이 화에 저장된 원본 로그가 없습니다.</div>';
+        toggleChronicleSourceLogs(true);
+        return;
+      }
+      container.innerHTML = logs.map((log, index) => {
+        if (editingChronicleSourceLogIndex === index) {
+          return `
+            <div class="chronicle-source-log ${getSeasonClass(log.season)}">
+              <div class="chronicle-source-edit-grid">
+                <input type="number" id="chronicleSourceYear_${index}" value="${escapeHtml(log.year ?? '')}" placeholder="연도">
+                <input type="text" id="chronicleSourceSeason_${index}" value="${escapeHtml(log.season ?? '')}" placeholder="분기">
+                <input type="number" id="chronicleSourceDay_${index}" min="1" value="${escapeHtml(log.day ?? '')}" placeholder="일">
+              </div>
+              <textarea id="chronicleSourceText_${index}" class="chronicle-source-edit-text">${escapeHtml(log.text)}</textarea>
+              <div class="chronicle-source-edit-actions">
+                <button type="button" class="btn-secondary" onclick="cancelEditChronicleSourceLog()">취소</button>
+                <button type="button" class="btn-primary" onclick="saveEditedChronicleSourceLog(${index})">수정 저장</button>
+              </div>
+            </div>`;
+        }
+        return `
+          <div class="chronicle-source-log ${getSeasonClass(log.season)}">
+            <div class="chronicle-source-top">
+              <div class="chronicle-source-date">📅 ${escapeHtml(log.dateStr || `${log.year}년 ${log.season} ${log.day}일`)}</div>
+              <div class="chronicle-source-actions">
+                <button type="button" class="chronicle-source-action" onclick="startEditChronicleSourceLog(${index})">✏ 편집</button>
+                <button type="button" class="chronicle-source-action delete" onclick="deleteChronicleSourceLog(${index})">× 삭제</button>
+              </div>
+            </div>
+            <div class="chronicle-source-text">${escapeHtml(log.text)}</div>
+          </div>`;
+      }).join('');
+      toggleChronicleSourceLogs(chronicleSourceExpanded);
+    }
+
+    function saveChronicleEpisode() {
+      const chapter = Math.max(1, parseInt(document.getElementById('chronicleChapter').value) || 1);
+      const episodeNo = Math.max(1, parseInt(document.getElementById('chronicleEpisode').value) || 1);
+      const title = document.getElementById('chronicleTitle').value.trim();
+      const novelText = document.getElementById('chronicleNovelText').value;
+      const id = document.getElementById('chronicleEpisodeId').value;
+
+      const duplicate = appData.chronicle.find(x => x.id !== id && (Number(x.chapter)||1) === chapter && (Number(x.episode)||1) === episodeNo);
+      if (duplicate && !confirm(`${chapter}장 ${episodeNo}화가 이미 있습니다. 그래도 같은 번호로 저장하시겠습니까?`)) return;
+
+      if (id) {
+        const ep = appData.chronicle.find(x => x.id === id);
+        if (!ep) return;
+        ep.chapter = chapter;
+        ep.episode = episodeNo;
+        ep.title = title;
+        ep.novelText = novelText;
+        ep.sourceLogs = chronicleDraftSourceLogs.map(x => ({...x}));
+        ep.updatedAt = Date.now();
+        selectedChronicleEpisodeId = ep.id;
+      } else {
+        const now = Date.now();
+        const ep = {
+          id: 'episode_' + now,
+          chapter,
+          episode: episodeNo,
+          title,
+          sourceLogs: chronicleDraftSourceLogs.map(x => ({...x})),
+          novelText,
+          createdAt: now,
+          updatedAt: now
+        };
+        appData.chronicle.push(ep);
+        selectedChronicleEpisodeId = ep.id;
+        document.getElementById('chronicleEpisodeId').value = ep.id;
+        document.getElementById('btnDeleteEpisode').style.display = '';
+      }
+      saveData();
+      renderChronicleList();
+      updateBadges();
+      document.getElementById('chronicleEditorHeading').innerText = `${chapter}장 ${episodeNo}화 편집`;
+      showToast(`${chapter}장 ${episodeNo}화가 저장되었습니다.`);
+    }
+
+    function deleteCurrentEpisode() {
+      const id = document.getElementById('chronicleEpisodeId').value;
+      if (!id) return;
+      const ep = appData.chronicle.find(x => x.id === id);
+      if (!ep) return;
+      if (!confirm(`${ep.chapter}장 ${ep.episode}화를 삭제하시겠습니까?\n이 화에 보관된 원본 로그 스냅샷과 소설 본문도 함께 삭제됩니다.`)) return;
+      appData.chronicle = appData.chronicle.filter(x => x.id !== id);
+      selectedChronicleEpisodeId = null;
+      saveData();
+      renderChronicleList();
+      resetChronicleEditor();
+      updateBadges();
+      showToast('화가 삭제되었습니다.');
+    }
+
+    function getChapterMeta(chapter) {
+      const key = String(Number(chapter) || 1);
+      if (!appData.chapterMeta) appData.chapterMeta = {};
+      if (!appData.chapterMeta[key]) appData.chapterMeta[key] = { name: '', collapsed: false };
+      if (typeof appData.chapterMeta[key].name !== 'string') appData.chapterMeta[key].name = '';
+      if (typeof appData.chapterMeta[key].collapsed !== 'boolean') appData.chapterMeta[key].collapsed = false;
+      return appData.chapterMeta[key];
+    }
+
+    function editChronicleChapterName(chapter) {
+      const meta = getChapterMeta(chapter);
+      const next = prompt(`제${chapter}장의 이름을 입력하세요.\n비워두면 장 이름을 제거합니다.`, meta.name || '');
+      if (next === null) return;
+      meta.name = next.trim();
+      saveData();
+      renderChronicleList();
+      showToast(meta.name ? `제${chapter}장 이름을 수정했습니다.` : `제${chapter}장 이름을 제거했습니다.`);
+    }
+
+    function toggleChronicleChapter(chapter) {
+      const meta = getChapterMeta(chapter);
+      meta.collapsed = !meta.collapsed;
+      saveData();
+      renderChronicleList();
+    }
+
+    function renderChronicleList() {
+      renderExistingEpisodeTargetOptions();
+      const container = document.getElementById('chronicleEpisodeList');
+      const count = document.getElementById('chronicleSidebarCount');
+      if (!container || !count) return;
+      count.innerText = appData.chronicle.length;
+      if (!appData.chronicle.length) {
+        container.innerHTML = '<div class="chronicle-empty">아직 저장된 화가 없습니다.<br>일지에서 로그를 선택해 새 화로 저장해보세요.</div>';
+        return;
+      }
+      const sorted = [...appData.chronicle].sort((a,b) => (Number(a.chapter)-Number(b.chapter)) || (Number(a.episode)-Number(b.episode)) || ((a.createdAt||0)-(b.createdAt||0)));
+      const groups = {};
+      sorted.forEach(ep => {
+        const ch = Number(ep.chapter) || 1;
+        if (!groups[ch]) groups[ch] = [];
+        groups[ch].push(ep);
+      });
+      container.innerHTML = Object.keys(groups).sort((a,b)=>Number(a)-Number(b)).map(ch => {
+        const meta = getChapterMeta(ch);
+        const chapterName = meta.name ? ` · ${escapeHtml(meta.name)}` : '';
+        return `
+        <div class="chronicle-chapter">
+          <div class="chronicle-chapter-title">
+            <div class="chronicle-chapter-label">제${escapeHtml(ch)}장${chapterName}</div>
+            <div class="chronicle-chapter-actions">
+              <button type="button" class="chronicle-chapter-action" onclick="editChronicleChapterName(${Number(ch)})">✏ 이름 편집</button>
+              <button type="button" class="chronicle-chapter-action" onclick="toggleChronicleChapter(${Number(ch)})">${meta.collapsed ? '▼ 펼치기' : '▲ 접기'}</button>
+            </div>
+          </div>
+          <div class="chronicle-chapter-episodes ${meta.collapsed ? 'collapsed' : ''}">
+            ${groups[ch].map(ep => `
+              <div class="chronicle-episode-item ${ep.id === selectedChronicleEpisodeId ? 'selected' : ''}" onclick="loadChronicleEpisode('${ep.id}')">
+                <div class="chronicle-episode-no">${escapeHtml(ch)}장 ${escapeHtml(ep.episode)}화 · 원본 로그 ${(ep.sourceLogs||[]).length}건</div>
+                <div class="chronicle-episode-title">${escapeHtml(ep.title || '제목 없음')}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function copyChronicleSourceLogs() {
+      const logs = chronicleDraftSourceLogs || [];
+      if (!logs.length) { alert('복사할 원본 로그가 없습니다.'); return; }
+      const text = logs.map(l => `[${l.dateStr || `${l.year}년 ${l.season} ${l.day}일`}] ${l.text}`).join('\n');
+      navigator.clipboard.writeText(text).then(() => showToast('이 화의 원본 로그를 복사했습니다.'));
+    }
+
+    function copyChronicleNovel() {
+      const text = document.getElementById('chronicleNovelText').value.trim();
+      if (!text) { alert('복사할 소설 본문이 없습니다.'); return; }
+      navigator.clipboard.writeText(text).then(() => showToast('소설 본문을 복사했습니다.'));
+    }
+
     /* 누적 일지 로그만 순수하게 전체 복사 */
     function copyRawLogsOnly() {
       if (appData.logs.length === 0) {
@@ -2182,6 +2920,8 @@
     function updateBadges() {
       document.getElementById('pawn-count-badge').innerText = appData.pawns.length;
       document.getElementById('log-count-badge').innerText = appData.logs.length;
+      const chronicleBadge = document.getElementById('chronicle-count-badge');
+      if (chronicleBadge) chronicleBadge.innerText = appData.chronicle.length;
     }
 
     function showToast(msg) {
