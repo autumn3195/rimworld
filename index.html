@@ -280,6 +280,14 @@
       align-items: start;
     }
 
+    /* 정착민 세팅 탭만 좌측 목록을 살짝 넓혀 hover 시 가로 스크롤 방지 */
+    #tab-pawns .two-column-layout {
+      grid-template-columns: 390px 1fr;
+    }
+    #tab-pawns .pawn-list {
+      overflow-x: hidden;
+    }
+
 
     /* 일지 탭 세력 정보 */
     .faction-section {
@@ -844,7 +852,7 @@
       padding-top: 12px;
       border-top: 1px solid var(--border);
       display: grid;
-      grid-template-columns: minmax(360px, 2fr) minmax(180px, 1fr) minmax(180px, 1fr);
+      grid-template-columns: minmax(360px, 2fr) minmax(145px, 0.8fr) minmax(145px, 0.8fr) auto;
       gap: 12px;
       align-items: end;
     }
@@ -1432,7 +1440,7 @@
           <div class="panel-box">
             <div class="top-single-row">
               <div>
-                <label>정착지 이름</label>
+                <label>세력 이름 / 정착지 이름</label>
                 <input type="text" id="colonyName" placeholder="예: 아테네 (Athens)">
               </div>
               <div>
@@ -1493,6 +1501,9 @@
                   <option value="Losing is Fun">
                   <option value="Custom">
                 </datalist>
+              </div>
+              <div style="display:flex; align-items:flex-end;">
+                <button type="button" class="btn-outline" style="height:35px; white-space:nowrap;" onclick="copyGameAndFactionSettings()">📋 설정 복사</button>
               </div>
             </div>
           </div>
@@ -3231,6 +3242,42 @@
       const text = document.getElementById('chronicleNovelText').value.trim();
       if (!text) { alert('복사할 소설 본문이 없습니다.'); return; }
       navigator.clipboard.writeText(text).then(() => showToast('소설 본문을 복사했습니다.'));
+    }
+
+    /* 정착지/게임/세력 설정 전체 복사 */
+    function copyGameAndFactionSettings() {
+      ensureFactionData();
+      const colony = appData.colony || {};
+      const dlcs = Array.isArray(colony.dlcs) && colony.dlcs.length ? colony.dlcs.join(', ') : '없음';
+
+      let text = `### [정착지 및 게임 설정]\n`;
+      text += `- 세력 이름 / 정착지 이름: ${colony.name || '미입력'}\n`;
+      text += `- 바이옴 (지형/기후): ${colony.biome || '미입력'}\n`;
+      text += `- 활성 DLC: ${dlcs}\n`;
+      text += `- 스토리텔러: ${colony.storyteller || '미입력'}\n`;
+      text += `- 난이도: ${colony.difficulty || '미입력'}\n\n`;
+      text += `### [세력 정보]\n`;
+
+      appData.factions.forEach((f, index) => {
+        const hasData = f.name || f.race || f.goodwill !== '';
+        if (!hasData) {
+          text += `- 세력 ${index + 1}: 미입력\n`;
+          return;
+        }
+        text += `- 세력 ${index + 1}: ${f.name || '이름 미입력'} / 인종: ${f.race || '미입력'} / 우호도: ${f.goodwill === '' ? '미입력' : f.goodwill}\n`;
+      });
+
+      navigator.clipboard.writeText(text.trim()).then(() => {
+        showToast('정착지·게임·세력 설정이 복사되었습니다!');
+      }).catch(() => {
+        const dummy = document.createElement('textarea');
+        document.body.appendChild(dummy);
+        dummy.value = text.trim();
+        dummy.select();
+        document.execCommand('copy');
+        document.body.removeChild(dummy);
+        showToast('정착지·게임·세력 설정이 복사되었습니다!');
+      });
     }
 
     /* 누적 일지 로그만 순수하게 전체 복사 */
