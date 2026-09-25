@@ -197,26 +197,36 @@
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
     .age-stage-options {
-      display: flex;
-      align-items: center;
-      gap: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 4px;
       min-height: 34px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 3px;
     }
     .age-stage-option {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      margin: 0;
-      font-size: 12px;
-      color: var(--text);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 4px;
+      padding: 6px 4px;
+      font-size: 11px;
+      font-weight: 700;
       cursor: pointer;
+      text-align: center;
+      white-space: nowrap;
+      transition: all 0.15s ease;
     }
-    .age-stage-option input[type="checkbox"] {
-      width: 14px;
-      height: 14px;
-      margin: 0;
-      accent-color: var(--accent);
-      cursor: pointer;
+    .age-stage-option:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+    }
+    .age-stage-option.active {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(88,166,255,0.10);
     }
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 
@@ -1283,11 +1293,12 @@
                 </div>
                 <div>
                   <label>성별</label>
-                  <select id="pawnGender">
-                    <option value="남성">남성</option>
-                    <option value="여성">여성</option>
-                    <option value="알 수 없음">기타/알 수 없음</option>
-                  </select>
+                  <div class="age-stage-options" id="pawnGenderSelector">
+                    <button type="button" class="age-stage-option active" data-gender="남성" onclick="selectPawnGender('남성')">남성</button>
+                    <button type="button" class="age-stage-option" data-gender="여성" onclick="selectPawnGender('여성')">여성</button>
+                    <button type="button" class="age-stage-option" data-gender="알 수 없음" onclick="selectPawnGender('알 수 없음')">기타</button>
+                  </div>
+                  <input type="hidden" id="pawnGender" value="남성">
                 </div>
               </div>
 
@@ -1301,11 +1312,14 @@
                   <input type="number" id="pawnAgeChrono" placeholder="예: 142" min="0">
                 </div>
                 <div>
-                  <label>성인 / 어린이</label>
-                  <div class="age-stage-options">
-                    <label class="age-stage-option"><input type="checkbox" id="pawnAdult" onchange="togglePawnAgeStage('adult')"> 성인</label>
-                    <label class="age-stage-option"><input type="checkbox" id="pawnChild" onchange="togglePawnAgeStage('child')"> 어린이</label>
+                  <label>연령 구분</label>
+                  <div class="age-stage-options" id="pawnAgeStageSelector">
+                    <button type="button" class="age-stage-option active" data-age-stage="성인" onclick="selectPawnAgeStage('성인')">성인</button>
+                    <button type="button" class="age-stage-option" data-age-stage="청소년" onclick="selectPawnAgeStage('청소년')">청소년</button>
+                    <button type="button" class="age-stage-option" data-age-stage="어린이" onclick="selectPawnAgeStage('어린이')">어린이</button>
+                    <button type="button" class="age-stage-option" data-age-stage="아기" onclick="selectPawnAgeStage('아기')">아기</button>
                   </div>
+                  <input type="hidden" id="pawnAgeStage" value="성인">
                 </div>
                 <div>
                   <label>인종 / 제노타입</label>
@@ -1619,6 +1633,35 @@
       return VALID_PAWN_STATUSES.includes(status) ? status : "생존";
     }
 
+    const VALID_AGE_STAGES = ["성인", "청소년", "어린이", "아기"];
+
+    function normalizePawnAgeStage(stage, isChild = false) {
+      if (VALID_AGE_STAGES.includes(stage)) return stage;
+      return isChild ? "어린이" : "성인";
+    }
+
+    function normalizePawnGender(gender) {
+      return ["남성", "여성", "알 수 없음"].includes(gender) ? gender : "남성";
+    }
+
+    function selectPawnGender(gender) {
+      gender = normalizePawnGender(gender);
+      const hidden = document.getElementById('pawnGender');
+      if (hidden) hidden.value = gender;
+      document.querySelectorAll('#pawnGenderSelector .age-stage-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.gender === gender);
+      });
+    }
+
+    function selectPawnAgeStage(stage) {
+      stage = normalizePawnAgeStage(stage);
+      const hidden = document.getElementById('pawnAgeStage');
+      if (hidden) hidden.value = stage;
+      document.querySelectorAll('#pawnAgeStageSelector .age-stage-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.ageStage === stage);
+      });
+    }
+
     function selectPawnStatus(status) {
       status = normalizePawnStatus(status);
       document.getElementById('pawnStatus').value = status;
@@ -1755,6 +1798,7 @@
 
       appData.pawns.forEach(pawn => {
         pawn.status = normalizePawnStatus(pawn.status);
+        pawn.ageStage = normalizePawnAgeStage(pawn.ageStage, pawn.isChild === true);
       });
 
       if (appData.currentLogDate) {
@@ -1783,6 +1827,8 @@
 
       renderSkillInputs({});
       selectPawnStatus("생존");
+      selectPawnAgeStage("성인");
+      selectPawnGender("남성");
       renderBothPawnLists();
       renderLogList();
       renderChronicleList();
@@ -1826,6 +1872,7 @@
     function saveData() {
       appData.pawns.forEach(pawn => {
         pawn.status = normalizePawnStatus(pawn.status);
+        pawn.ageStage = normalizePawnAgeStage(pawn.ageStage, pawn.isChild === true);
       });
       localStorage.setItem("rimworld_chronicle_data", JSON.stringify(appData));
     }
@@ -2228,12 +2275,11 @@
       document.getElementById('pawnFirst').value = "";
       document.getElementById('pawnNick').value = "";
       document.getElementById('pawnLast').value = "";
-      document.getElementById('pawnGender').value = "남성";
+      selectPawnGender("남성");
       selectPawnStatus("생존");
       document.getElementById('pawnAgeBio').value = "";
       document.getElementById('pawnAgeChrono').value = "";
-      document.getElementById('pawnAdult').checked = true;
-      document.getElementById('pawnChild').checked = false;
+      selectPawnAgeStage("성인");
       document.getElementById('pawnRace').value = "인간";
       document.getElementById('pawnChildhood').value = "";
       document.getElementById('pawnAdulthood').value = "";
@@ -2258,13 +2304,11 @@
       document.getElementById('pawnFirst').value = p.first || "";
       document.getElementById('pawnNick').value = p.nick || "";
       document.getElementById('pawnLast').value = p.last || "";
-      document.getElementById('pawnGender').value = p.gender || "남성";
+      selectPawnGender(normalizePawnGender(p.gender));
       selectPawnStatus(p.status);
       document.getElementById('pawnAgeBio').value = p.ageBio || "";
       document.getElementById('pawnAgeChrono').value = p.ageChrono || "";
-      const isChild = p.ageStage === '어린이' || p.isChild === true;
-      document.getElementById('pawnAdult').checked = !isChild;
-      document.getElementById('pawnChild').checked = isChild;
+      selectPawnAgeStage(normalizePawnAgeStage(p.ageStage, p.isChild === true));
       document.getElementById('pawnRace').value = p.race || "인간";
       document.getElementById('pawnChildhood').value = p.childhood || "";
       document.getElementById('pawnAdulthood').value = p.adulthood || "";
@@ -2309,11 +2353,11 @@
         first: first,
         nick: nick,
         last: last,
-        gender: document.getElementById('pawnGender').value,
+        gender: normalizePawnGender(document.getElementById('pawnGender').value),
         status: normalizePawnStatus(document.getElementById('pawnStatus').value),
         ageBio: document.getElementById('pawnAgeBio').value,
         ageChrono: document.getElementById('pawnAgeChrono').value,
-        ageStage: document.getElementById('pawnChild').checked ? '어린이' : '성인',
+        ageStage: normalizePawnAgeStage(document.getElementById('pawnAgeStage').value),
         race: document.getElementById('pawnRace').value,
         childhood: document.getElementById('pawnChildhood').value,
         adulthood: document.getElementById('pawnAdulthood').value,
@@ -2489,7 +2533,7 @@
       let text = `${prefix}${callSign}\n`;
       text += `- 현재 상태: ${normalizePawnStatus(p.status)}\n`;
       text += `- 성별 / 인종: ${p.gender} / ${p.race || '일반 인간'}\n`;
-      text += `- 연령 구분: ${p.ageStage || (p.isChild ? '어린이' : '성인')}\n`;
+      text += `- 연령 구분: ${normalizePawnAgeStage(p.ageStage, p.isChild === true)}\n`;
       text += `- 나이: ${ageInfo}\n`;
       text += `- 배경: 유년기 [${p.childhood || '불명'}] / 성년기 [${p.adulthood || '불명'}]\n`;
       text += `- 특성: ${p.traits || '없음'}\n`;
