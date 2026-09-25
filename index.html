@@ -270,6 +270,93 @@
       align-items: start;
     }
 
+
+    /* 일지 탭 세력 정보 */
+    .faction-section {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .faction-section-title {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .faction-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+    }
+    .faction-card {
+      --faction-color: var(--accent);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--faction-color);
+      border-radius: 7px;
+      background: var(--bg-card);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+    .faction-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      min-width: 0;
+    }
+    .faction-card-name {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .faction-card-edit-btn {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 5px;
+      padding: 2px 5px;
+      font-size: 10.5px;
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+    .faction-card-edit-btn:hover { color: var(--text); border-color: var(--accent); }
+    .faction-card-meta {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 4px 8px;
+      font-size: 10.8px;
+    }
+    .faction-card-label { color: var(--text-muted); }
+    .faction-card-value { color: var(--text); text-align: right; overflow-wrap: anywhere; }
+    .faction-card-empty { color: var(--text-muted); font-style: italic; font-size: 10.8px; }
+    .faction-card-editing { display: grid; gap: 5px; }
+    .faction-card input {
+      width: 100%;
+      min-width: 0;
+      padding: 5px 6px;
+      font-size: 11px;
+      height: 28px;
+    }
+    .faction-card input::placeholder { color: var(--text-muted); opacity: .8; }
+    .faction-card-actions { display: flex; gap: 5px; justify-content: flex-end; }
+    .faction-card-actions button { padding: 3px 7px; font-size: 10.5px; }
+    .faction-card.faction-purple { --faction-color: #a970ff; }
+    .faction-card.faction-sky { --faction-color: #65c9f4; }
+    .faction-card.faction-yellow { --faction-color: #e7c84b; }
+    .faction-card.faction-green { --faction-color: #55c66b; }
+    .faction-card.faction-red { --faction-color: #e35b5b; }
+    .faction-card.faction-coral { --faction-color: #ff735c; }
+    .faction-card.faction-pink { --faction-color: #f283b5; }
+    .faction-card.faction-beige { --faction-color: #d8c3a5; }
+
     .pawn-sidebar {
       background: var(--bg-panel);
       border: 1px solid var(--border);
@@ -1306,6 +1393,11 @@
       <div class="two-column-layout">
         <!-- 일지 탭 좌측: 정착민 목록 사이드바 -->
         <div class="pawn-sidebar">
+
+          <div class="faction-section">
+            <div class="faction-section-title">⚑ 세력 정보</div>
+            <div class="faction-grid" id="factionGrid"></div>
+          </div>
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span style="font-size: 11.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
               👥 등록 정착민 명단
@@ -1542,6 +1634,105 @@
       return '';
     }
 
+
+    function ensureFactionData() {
+      if (!Array.isArray(appData.factions)) appData.factions = [];
+      while (appData.factions.length < 8) appData.factions.push({ name: "", race: "", goodwill: "" });
+      if (appData.factions.length > 8) appData.factions = appData.factions.slice(0, 8);
+      appData.factions = appData.factions.map(f => ({
+        name: typeof f?.name === 'string' ? f.name : "",
+        race: typeof f?.race === 'string' ? f.race : "",
+        goodwill: f?.goodwill ?? ""
+      }));
+    }
+
+    const FACTION_COLOR_CLASSES = [
+      'faction-purple', 'faction-sky', 'faction-yellow', 'faction-green',
+      'faction-red', 'faction-coral', 'faction-pink', 'faction-beige'
+    ];
+    let editingFactionIndex = null;
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function renderFactionInputs() {
+      ensureFactionData();
+      const grid = document.getElementById('factionGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      appData.factions.forEach((data, index) => {
+        const card = document.createElement('div');
+        card.className = `faction-card ${FACTION_COLOR_CLASSES[index]}`;
+        card.dataset.factionIndex = index;
+
+        if (editingFactionIndex === index) {
+          card.innerHTML = `
+            <div class="faction-card-editing">
+              <input type="text" data-field="name" value="${escapeHtml(data.name)}" placeholder="세력 이름">
+              <input type="text" data-field="race" value="${escapeHtml(data.race)}" placeholder="인종">
+              <input type="number" data-field="goodwill" value="${escapeHtml(data.goodwill)}" placeholder="우호도">
+              <div class="faction-card-actions">
+                <button type="button" class="btn-secondary" onclick="cancelFactionEdit()">취소</button>
+                <button type="button" class="btn-primary" onclick="saveFactionEdit(${index})">저장</button>
+              </div>
+            </div>
+          `;
+        } else {
+          const hasData = data.name || data.race || data.goodwill !== '';
+          card.innerHTML = `
+            <div class="faction-card-head">
+              <div class="faction-card-name">${escapeHtml(data.name || `세력 ${index + 1}`)}</div>
+              <button type="button" class="faction-card-edit-btn" onclick="editFaction(${index})">✏ 편집</button>
+            </div>
+            ${hasData ? `
+              <div class="faction-card-meta">
+                <span class="faction-card-label">인종</span><span class="faction-card-value">${escapeHtml(data.race || '-')}</span>
+                <span class="faction-card-label">우호도</span><span class="faction-card-value">${escapeHtml(data.goodwill === '' ? '-' : data.goodwill)}</span>
+              </div>
+            ` : `<div class="faction-card-empty">정보 없음</div>`}
+          `;
+        }
+        grid.appendChild(card);
+      });
+    }
+
+    function editFaction(index) {
+      editingFactionIndex = index;
+      renderFactionInputs();
+      const card = document.querySelector(`#factionGrid .faction-card[data-faction-index="${index}"]`);
+      card?.querySelector('[data-field="name"]')?.focus();
+    }
+
+    function cancelFactionEdit() {
+      editingFactionIndex = null;
+      renderFactionInputs();
+    }
+
+    function saveFactionEdit(index) {
+      ensureFactionData();
+      const card = document.querySelector(`#factionGrid .faction-card[data-faction-index="${index}"]`);
+      if (!card) return;
+      appData.factions[index] = {
+        name: card.querySelector('[data-field="name"]')?.value.trim() || '',
+        race: card.querySelector('[data-field="race"]')?.value.trim() || '',
+        goodwill: card.querySelector('[data-field="goodwill"]')?.value ?? ''
+      };
+      editingFactionIndex = null;
+      saveData();
+      renderFactionInputs();
+    }
+
+    function bindFactionInputs() {
+      // 세력 카드는 편집 버튼을 눌렀을 때만 입력칸을 생성하므로 별도 상시 바인딩이 필요하지 않음.
+    }
+
     function init() {
       const saved = localStorage.getItem("rimworld_chronicle_data");
       if (saved) {
@@ -1556,6 +1747,7 @@
       if (!Array.isArray(appData.colony.dlcs)) appData.colony.dlcs = [];
       if (typeof appData.colony.storyteller !== 'string') appData.colony.storyteller = "";
       if (typeof appData.colony.difficulty !== 'string') appData.colony.difficulty = "";
+      ensureFactionData();
       if (!Array.isArray(appData.pawns)) appData.pawns = [];
       if (!Array.isArray(appData.logs)) appData.logs = [];
       if (!Array.isArray(appData.chronicle)) appData.chronicle = [];
@@ -1579,6 +1771,9 @@
       document.querySelectorAll('#dlcChecks input[type="checkbox"]').forEach(cb => {
         cb.checked = appData.colony.dlcs.includes(cb.value);
       });
+
+      renderFactionInputs();
+      bindFactionInputs();
 
       if (appData.currentLogDate) {
         document.getElementById('logYear').value = appData.currentLogDate.year || 5500;
@@ -1658,6 +1853,7 @@
 
       appData = {
         colony: { name: "", biome: "", dlcs: [], storyteller: "", difficulty: "" },
+        factions: Array.from({ length: 8 }, () => ({ name: "", race: "", goodwill: "" })),
         pawns: [],
         logs: [],
         chronicle: [],
