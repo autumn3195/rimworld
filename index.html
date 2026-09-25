@@ -742,6 +742,41 @@
       align-items: end;
     }
 
+    .game-settings-row {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: minmax(360px, 2fr) minmax(180px, 1fr) minmax(180px, 1fr);
+      gap: 12px;
+      align-items: end;
+    }
+    .dlc-checks {
+      min-height: 35px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .dlc-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--bg-card);
+      font-size: 11.5px;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .dlc-check input {
+      width: auto;
+      margin: 0;
+      accent-color: var(--accent);
+    }
+
     .log-input-row {
       display: flex;
       gap: 12px;
@@ -1057,6 +1092,7 @@
       .two-column-layout { grid-template-columns: 1fr; }
       .pawn-editor-body { grid-template-columns: 1fr; }
       .top-single-row { grid-template-columns: 1fr 1fr; }
+      .game-settings-row { grid-template-columns: 1fr; }
       .chronicle-layout { grid-template-columns: 1fr; }
       .chronicle-meta-grid { grid-template-columns: 1fr 1fr; }
       .chronicle-meta-grid > div:last-child { grid-column: 1 / -1; }
@@ -1318,6 +1354,41 @@
                 <button class="btn-outline" style="height: 35px; white-space: nowrap;" onclick="advanceOneDay()">+1일 넘기기</button>
               </div>
             </div>
+
+            <div class="game-settings-row">
+              <div>
+                <label>활성 DLC</label>
+                <div class="dlc-checks" id="dlcChecks">
+                  <label class="dlc-check"><input type="checkbox" value="Royalty"> Royalty</label>
+                  <label class="dlc-check"><input type="checkbox" value="Ideology"> Ideology</label>
+                  <label class="dlc-check"><input type="checkbox" value="Biotech"> Biotech</label>
+                  <label class="dlc-check"><input type="checkbox" value="Anomaly"> Anomaly</label>
+                  <label class="dlc-check"><input type="checkbox" value="Odyssey"> Odyssey</label>
+                </div>
+              </div>
+              <div>
+                <label>스토리텔러</label>
+                <input type="text" id="colonyStoryteller" list="storytellerOptions" placeholder="예: Cassandra Classic">
+                <datalist id="storytellerOptions">
+                  <option value="Cassandra Classic">
+                  <option value="Phoebe Chillax">
+                  <option value="Randy Random">
+                </datalist>
+              </div>
+              <div>
+                <label>난이도</label>
+                <input type="text" id="colonyDifficulty" list="difficultyOptions" placeholder="예: Strive to Survive">
+                <datalist id="difficultyOptions">
+                  <option value="Peaceful">
+                  <option value="Community Builder">
+                  <option value="Adventure Story">
+                  <option value="Strive to Survive">
+                  <option value="Blood and Dust">
+                  <option value="Losing is Fun">
+                  <option value="Custom">
+                </datalist>
+              </div>
+            </div>
           </div>
 
           <!-- 2. 빠른 일지 작성란 -->
@@ -1431,7 +1502,10 @@
     let appData = {
       colony: {
         name: "아테네",
-        biome: "온대림"
+        biome: "온대림",
+        dlcs: [],
+        storyteller: "",
+        difficulty: ""
       },
       pawns: [],
       logs: [],
@@ -1478,7 +1552,10 @@
         }
       }
 
-      if (!appData.colony) appData.colony = { name: "", biome: "" };
+      if (!appData.colony) appData.colony = { name: "", biome: "", dlcs: [], storyteller: "", difficulty: "" };
+      if (!Array.isArray(appData.colony.dlcs)) appData.colony.dlcs = [];
+      if (typeof appData.colony.storyteller !== 'string') appData.colony.storyteller = "";
+      if (typeof appData.colony.difficulty !== 'string') appData.colony.difficulty = "";
       if (!Array.isArray(appData.pawns)) appData.pawns = [];
       if (!Array.isArray(appData.logs)) appData.logs = [];
       if (!Array.isArray(appData.chronicle)) appData.chronicle = [];
@@ -1497,6 +1574,11 @@
 
       document.getElementById('colonyName').value = (appData.colony && appData.colony.name) || "";
       document.getElementById('colonyBiome').value = (appData.colony && appData.colony.biome) || "";
+      document.getElementById('colonyStoryteller').value = appData.colony.storyteller || "";
+      document.getElementById('colonyDifficulty').value = appData.colony.difficulty || "";
+      document.querySelectorAll('#dlcChecks input[type="checkbox"]').forEach(cb => {
+        cb.checked = appData.colony.dlcs.includes(cb.value);
+      });
 
       if (appData.currentLogDate) {
         document.getElementById('logYear').value = appData.currentLogDate.year || 5500;
@@ -1517,6 +1599,23 @@
           if (!appData.colony) appData.colony = {};
           appData.colony.name = document.getElementById('colonyName').value;
           appData.colony.biome = document.getElementById('colonyBiome').value;
+          saveData();
+        });
+      });
+
+      ['colonyStoryteller', 'colonyDifficulty'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+          if (!appData.colony) appData.colony = {};
+          appData.colony.storyteller = document.getElementById('colonyStoryteller').value;
+          appData.colony.difficulty = document.getElementById('colonyDifficulty').value;
+          saveData();
+        });
+      });
+
+      document.querySelectorAll('#dlcChecks input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          if (!appData.colony) appData.colony = {};
+          appData.colony.dlcs = Array.from(document.querySelectorAll('#dlcChecks input[type="checkbox"]:checked')).map(el => el.value);
           saveData();
         });
       });
@@ -1543,6 +1642,9 @@
       if (!appData.colony) appData.colony = {};
       appData.colony.name = document.getElementById('colonyName').value;
       appData.colony.biome = document.getElementById('colonyBiome').value;
+      appData.colony.storyteller = document.getElementById('colonyStoryteller').value;
+      appData.colony.difficulty = document.getElementById('colonyDifficulty').value;
+      appData.colony.dlcs = Array.from(document.querySelectorAll('#dlcChecks input[type="checkbox"]:checked')).map(el => el.value);
       saveData();
       showToast("💾 전체 데이터가 안전하게 저장되었습니다!");
     }
@@ -1555,7 +1657,7 @@
       if (!step2) return;
 
       appData = {
-        colony: { name: "", biome: "" },
+        colony: { name: "", biome: "", dlcs: [], storyteller: "", difficulty: "" },
         pawns: [],
         logs: [],
         chronicle: [],
