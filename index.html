@@ -516,6 +516,129 @@
       gap: 6px;
     }
 
+    /* 입력 후 추가하는 등록형 필드 */
+    .entry-add-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .entry-add-row input[type="text"] {
+      flex: 1;
+      min-width: 0;
+    }
+    .entry-add-btn {
+      flex: 0 0 auto;
+      padding: 7px 12px;
+      white-space: nowrap;
+    }
+    .entry-item-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 7px;
+      min-height: 0;
+    }
+    .entry-item-list:empty {
+      margin-top: 0;
+    }
+    .entry-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 100%;
+      padding: 4px 7px 4px 9px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-card);
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.25;
+    }
+    .entry-chip-text {
+      overflow-wrap: anywhere;
+    }
+    .entry-chip-remove {
+      border: 0;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0 1px;
+      font-size: 13px;
+      line-height: 1;
+    }
+    .entry-chip-remove:hover {
+      color: var(--danger);
+    }
+    .health-entry-list .entry-chip {
+      border-radius: 6px;
+    }
+
+    /* 인간관계 & 사연 등록/편집 */
+    .relationship-add-grid {
+      display: grid;
+      grid-template-columns: minmax(140px, 0.8fr) minmax(220px, 1.7fr) auto;
+      gap: 6px;
+      align-items: center;
+    }
+    .relationship-item-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 8px;
+    }
+    .relationship-item-list:empty {
+      margin-top: 0;
+    }
+    .relationship-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      max-width: 100%;
+      padding: 5px 7px 5px 9px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--bg-card);
+      font-size: 12px;
+      color: var(--text);
+    }
+    .relationship-chip-main {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .relationship-chip-target {
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .relationship-chip-separator {
+      color: var(--text-muted);
+      margin: 0 3px;
+    }
+    .relationship-chip-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      flex: 0 0 auto;
+    }
+    .relationship-chip-btn {
+      border: 0;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 1px 3px;
+      font-size: 12px;
+      line-height: 1;
+    }
+    .relationship-chip-btn:hover { color: var(--accent); }
+    .relationship-chip-btn.remove:hover { color: var(--danger); }
+    @media (max-width: 900px) {
+      .relationship-add-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .relationship-add-grid .entry-add-btn {
+        grid-column: 1 / -1;
+      }
+    }
+
     /* ✕ 결격 토글 버튼 */
     .btn-incapable-toggle {
       background: transparent;
@@ -872,21 +995,42 @@
               <div class="grid-2">
                 <div>
                   <label>특성 (Traits)</label>
-                  <input type="text" id="pawnTraits" placeholder="예: 철의 의지, 신중한 사수, 사이코패스 (쉼표 구분)">
+                  <div class="entry-add-row">
+                    <input type="text" id="pawnTraitsInput" placeholder="예: 철의 의지" onkeydown="handleEntryKey(event, 'traits')">
+                    <button type="button" class="btn-secondary entry-add-btn" onclick="addEntryItem('traits')">추가</button>
+                  </div>
+                  <input type="hidden" id="pawnTraits">
+                  <div class="entry-item-list" id="pawnTraitsList"></div>
                 </div>
                 <div>
                   <label>결격 사항 (Incapable)</label>
-                  <input type="text" id="pawnIncapable" placeholder="예: 폭력, 단순 노동, 예술 (쉼표 구분)">
+                  <div class="entry-add-row">
+                    <input type="text" id="pawnIncapableInput" placeholder="예: 폭력" onkeydown="handleEntryKey(event, 'incapable')">
+                    <button type="button" class="btn-secondary entry-add-btn" onclick="addEntryItem('incapable')">추가</button>
+                  </div>
+                  <input type="hidden" id="pawnIncapable">
+                  <div class="entry-item-list" id="pawnIncapableList"></div>
                 </div>
               </div>
 
               <div>
                 <label>건강 / 신체 상태 (Health & Bionics)</label>
-                <textarea id="pawnHealth" rows="2" placeholder="예: 오른쪽 눈 상실(애꾸), 왼쪽 다리 목제 의족, 흉터 통증 등"></textarea>
+                <div class="entry-add-row">
+                  <input type="text" id="pawnHealthInput" placeholder="예: 오른쪽 눈 상실(애꾸)" onkeydown="handleEntryKey(event, 'health')">
+                  <button type="button" class="btn-secondary entry-add-btn" onclick="addEntryItem('health')">추가</button>
+                </div>
+                <input type="hidden" id="pawnHealth">
+                <div class="entry-item-list health-entry-list" id="pawnHealthList"></div>
               </div>
               <div>
                 <label>인간관계 & 사연 (Relationships)</label>
-                <textarea id="pawnRelations" rows="2" placeholder="예: '엘레나'와 연인 관계, 전우 '마커스'의 죽음으로 복수심 품음 등"></textarea>
+                <div class="relationship-add-grid">
+                  <input type="text" id="pawnRelationTargetInput" placeholder="관계 맺은 대상" onkeydown="handleRelationshipKey(event)">
+                  <input type="text" id="pawnRelationContentInput" placeholder="관계 내용 / 사연" onkeydown="handleRelationshipKey(event)">
+                  <button type="button" class="btn-secondary entry-add-btn" id="pawnRelationAddBtn" onclick="addOrUpdateRelationship()">추가</button>
+                </div>
+                <input type="hidden" id="pawnRelations">
+                <div class="relationship-item-list" id="pawnRelationsList"></div>
               </div>
             </div>
 
@@ -1288,6 +1432,207 @@
       }
     }
 
+    const ENTRY_FIELD_CONFIG = {
+      traits: { hiddenId: 'pawnTraits', inputId: 'pawnTraitsInput', listId: 'pawnTraitsList', separator: ', ' },
+      incapable: { hiddenId: 'pawnIncapable', inputId: 'pawnIncapableInput', listId: 'pawnIncapableList', separator: ', ' },
+      health: { hiddenId: 'pawnHealth', inputId: 'pawnHealthInput', listId: 'pawnHealthList', separator: '\n' }
+    };
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function parseEntryItems(type, rawValue) {
+      const raw = String(rawValue || '').trim();
+      if (!raw) return [];
+      if (type === 'health') {
+        return raw.split(/\n+/).map(v => v.trim()).filter(Boolean);
+      }
+      return raw.split(',').map(v => v.trim()).filter(Boolean);
+    }
+
+    function getEntryItems(type) {
+      const cfg = ENTRY_FIELD_CONFIG[type];
+      if (!cfg) return [];
+      return parseEntryItems(type, document.getElementById(cfg.hiddenId)?.value || '');
+    }
+
+    function setEntryItems(type, items) {
+      const cfg = ENTRY_FIELD_CONFIG[type];
+      if (!cfg) return;
+      const cleaned = items.map(v => String(v).trim()).filter(Boolean);
+      document.getElementById(cfg.hiddenId).value = cleaned.join(cfg.separator);
+      renderEntryItems(type);
+    }
+
+    function renderEntryItems(type) {
+      const cfg = ENTRY_FIELD_CONFIG[type];
+      if (!cfg) return;
+      const list = document.getElementById(cfg.listId);
+      if (!list) return;
+      const items = getEntryItems(type);
+      list.innerHTML = items.map((item, index) => `
+        <span class="entry-chip">
+          <span class="entry-chip-text">${escapeHtml(item)}</span>
+          <button type="button" class="entry-chip-remove" onclick="removeEntryItem('${type}', ${index})" title="삭제">×</button>
+        </span>`).join('');
+    }
+
+    function addEntryItem(type) {
+      const cfg = ENTRY_FIELD_CONFIG[type];
+      if (!cfg) return;
+      const input = document.getElementById(cfg.inputId);
+      if (!input) return;
+      const value = input.value.trim();
+      if (!value) return;
+      const items = getEntryItems(type);
+      items.push(value);
+      setEntryItems(type, items);
+      input.value = '';
+      input.focus();
+    }
+
+    function removeEntryItem(type, index) {
+      const items = getEntryItems(type);
+      if (index < 0 || index >= items.length) return;
+      items.splice(index, 1);
+      setEntryItems(type, items);
+    }
+
+    function handleEntryKey(event, type) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        addEntryItem(type);
+      }
+    }
+
+    function loadEntryField(type, rawValue) {
+      setEntryItems(type, parseEntryItems(type, rawValue));
+      const cfg = ENTRY_FIELD_CONFIG[type];
+      const input = document.getElementById(cfg.inputId);
+      if (input) input.value = '';
+    }
+
+    let relationshipEditingIndex = -1;
+
+    function parseRelationships(rawValue) {
+      const raw = String(rawValue || '').trim();
+      if (!raw) return [];
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          return parsed.map(item => ({
+            target: String(item?.target || '').trim(),
+            content: String(item?.content || '').trim()
+          })).filter(item => item.target || item.content);
+        }
+      } catch (e) {}
+      // 구버전의 단일 자유서술 텍스트 호환
+      return [{ target: '기존 기록', content: raw }];
+    }
+
+    function getRelationships() {
+      return parseRelationships(document.getElementById('pawnRelations')?.value || '');
+    }
+
+    function setRelationships(items) {
+      const cleaned = items.map(item => ({
+        target: String(item?.target || '').trim(),
+        content: String(item?.content || '').trim()
+      })).filter(item => item.target || item.content);
+      document.getElementById('pawnRelations').value = cleaned.length ? JSON.stringify(cleaned) : '';
+      renderRelationships();
+    }
+
+    function renderRelationships() {
+      const list = document.getElementById('pawnRelationsList');
+      if (!list) return;
+      const items = getRelationships();
+      list.innerHTML = items.map((item, index) => `
+        <span class="relationship-chip">
+          <span class="relationship-chip-main">
+            <span class="relationship-chip-target">${escapeHtml(item.target || '대상 없음')}</span>
+            <span class="relationship-chip-separator">—</span>
+            <span>${escapeHtml(item.content || '내용 없음')}</span>
+          </span>
+          <span class="relationship-chip-actions">
+            <button type="button" class="relationship-chip-btn" onclick="editRelationship(${index})" title="편집">✏</button>
+            <button type="button" class="relationship-chip-btn remove" onclick="removeRelationship(${index})" title="삭제">×</button>
+          </span>
+        </span>`).join('');
+    }
+
+    function resetRelationshipEditor() {
+      relationshipEditingIndex = -1;
+      const target = document.getElementById('pawnRelationTargetInput');
+      const content = document.getElementById('pawnRelationContentInput');
+      const btn = document.getElementById('pawnRelationAddBtn');
+      if (target) target.value = '';
+      if (content) content.value = '';
+      if (btn) btn.textContent = '추가';
+    }
+
+    function loadRelationships(rawValue) {
+      setRelationships(parseRelationships(rawValue));
+      resetRelationshipEditor();
+    }
+
+    function addOrUpdateRelationship() {
+      const targetInput = document.getElementById('pawnRelationTargetInput');
+      const contentInput = document.getElementById('pawnRelationContentInput');
+      if (!targetInput || !contentInput) return;
+      const target = targetInput.value.trim();
+      const content = contentInput.value.trim();
+      if (!target || !content) return;
+
+      const items = getRelationships();
+      if (relationshipEditingIndex >= 0 && relationshipEditingIndex < items.length) {
+        items[relationshipEditingIndex] = { target, content };
+      } else {
+        items.push({ target, content });
+      }
+      setRelationships(items);
+      resetRelationshipEditor();
+      targetInput.focus();
+    }
+
+    function editRelationship(index) {
+      const items = getRelationships();
+      if (index < 0 || index >= items.length) return;
+      relationshipEditingIndex = index;
+      document.getElementById('pawnRelationTargetInput').value = items[index].target || '';
+      document.getElementById('pawnRelationContentInput').value = items[index].content || '';
+      document.getElementById('pawnRelationAddBtn').textContent = '수정 완료';
+      document.getElementById('pawnRelationTargetInput').focus();
+    }
+
+    function removeRelationship(index) {
+      const items = getRelationships();
+      if (index < 0 || index >= items.length) return;
+      items.splice(index, 1);
+      setRelationships(items);
+      resetRelationshipEditor();
+    }
+
+    function handleRelationshipKey(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        addOrUpdateRelationship();
+      } else if (event.key === 'Escape' && relationshipEditingIndex >= 0) {
+        resetRelationshipEditor();
+      }
+    }
+
+    function formatRelationshipsForText(rawValue) {
+      const items = parseRelationships(rawValue);
+      return items.map(item => `${item.target || '대상 없음'}: ${item.content || '내용 없음'}`).join(' / ');
+    }
+
     function resetPawnForm() {
       selectedPawnId = null;
       document.getElementById('pawnId').value = "";
@@ -1306,10 +1651,10 @@
       document.getElementById('pawnRace').value = "인간";
       document.getElementById('pawnChildhood').value = "";
       document.getElementById('pawnAdulthood').value = "";
-      document.getElementById('pawnTraits').value = "";
-      document.getElementById('pawnIncapable').value = "";
-      document.getElementById('pawnHealth').value = "";
-      document.getElementById('pawnRelations').value = "";
+      loadEntryField('traits', '');
+      loadEntryField('incapable', '');
+      loadEntryField('health', '');
+      loadRelationships('');
 
       renderSkillInputs({});
       renderBothPawnLists();
@@ -1337,10 +1682,10 @@
       document.getElementById('pawnRace').value = p.race || "인간";
       document.getElementById('pawnChildhood').value = p.childhood || "";
       document.getElementById('pawnAdulthood').value = p.adulthood || "";
-      document.getElementById('pawnTraits').value = p.traits || "";
-      document.getElementById('pawnIncapable').value = p.incapable || "";
-      document.getElementById('pawnHealth').value = p.health || "";
-      document.getElementById('pawnRelations').value = p.relations || "";
+      loadEntryField('traits', p.traits || '');
+      loadEntryField('incapable', p.incapable || '');
+      loadEntryField('health', p.health || '');
+      loadRelationships(p.relations || '');
 
       renderSkillInputs(p.skills || {});
       renderBothPawnLists();
@@ -1564,7 +1909,7 @@
       text += `- 특성: ${p.traits || '없음'}\n`;
       if (p.incapable) text += `- 결격 사항: ${p.incapable}\n`;
       if (p.health) text += `- 신체 상태: ${p.health}\n`;
-      if (p.relations) text += `- 인간관계: ${p.relations}\n`;
+      if (p.relations) text += `- 인간관계: ${formatRelationshipsForText(p.relations)}\n`;
 
       text += `- 기술 스탯 (전체):\n`;
       STAT_LIST.forEach(s => {
