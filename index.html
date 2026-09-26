@@ -354,6 +354,9 @@
     }
     .faction-card-label { color: var(--text-muted); }
     .faction-card-value { color: var(--text); text-align: right; overflow-wrap: anywhere; }
+    .faction-card-value.goodwill-nonnegative { color: #58a6ff; font-weight: 800; }
+    .faction-card-value.goodwill-negative { color: var(--danger); font-weight: 800; }
+    .faction-card-value.goodwill-permanent { color: var(--danger); font-weight: 800; }
     .faction-card-empty { color: var(--text-muted); font-style: italic; font-size: 10.8px; }
     .faction-card-editing { display: grid; gap: 5px; }
     .faction-card input {
@@ -681,7 +684,7 @@
     /* 인간관계 & 사연 등록/편집 */
     .relationship-add-grid {
       display: grid;
-      grid-template-columns: minmax(140px, 0.8fr) minmax(220px, 1.7fr) auto;
+      grid-template-columns: minmax(140px, 0.8fr) minmax(220px, 1.5fr) 90px auto;
       gap: 6px;
       align-items: center;
     }
@@ -713,12 +716,34 @@
       gap: 2px;
       overflow-wrap: anywhere;
     }
+    .relationship-chip-target-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+    }
     .relationship-chip-target {
       display: block;
       font-weight: 800;
       color: var(--accent);
       line-height: 1.25;
+      min-width: 0;
+      overflow-wrap: anywhere;
     }
+    .relationship-chip-value {
+      flex: 0 0 auto;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-muted);
+      padding: 1px 5px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.03);
+      line-height: 1.2;
+    }
+    .relationship-chip-value.value-positive { color: var(--success); border-color: rgba(63,185,80,.45); background: rgba(63,185,80,.08); }
+    .relationship-chip-value.value-negative { color: var(--danger); border-color: rgba(207,69,59,.45); background: rgba(207,69,59,.08); }
+    .relationship-chip-value.value-zero { color: var(--text-muted); }
     .relationship-chip-content {
       display: block;
       color: var(--text);
@@ -1381,6 +1406,7 @@
                 <div class="relationship-add-grid">
                   <input type="text" id="pawnRelationTargetInput" placeholder="관계 맺은 대상" onkeydown="handleRelationshipKey(event)">
                   <input type="text" id="pawnRelationContentInput" placeholder="관계 내용 / 사연" onkeydown="handleRelationshipKey(event)">
+                  <input type="number" id="pawnRelationValueInput" min="-100" max="100" step="1" placeholder="수치" onkeydown="handleRelationshipKey(event)">
                   <button type="button" class="btn-secondary entry-add-btn" id="pawnRelationAddBtn" onclick="addOrUpdateRelationship()">추가</button>
                 </div>
                 <input type="hidden" id="pawnRelations">
@@ -1689,22 +1715,69 @@
     }
 
 
-    function ensureFactionData() {
-      if (!Array.isArray(appData.factions)) appData.factions = [];
-      while (appData.factions.length < 8) appData.factions.push({ name: "", race: "", goodwill: "" });
-      if (appData.factions.length > 8) appData.factions = appData.factions.slice(0, 8);
-      appData.factions = appData.factions.map(f => ({
-        name: typeof f?.name === 'string' ? f.name : "",
-        race: typeof f?.race === 'string' ? f.race : "",
-        goodwill: f?.goodwill ?? ""
-      }));
-    }
-
     const FACTION_COLOR_CLASSES = [
       'faction-purple', 'faction-sky', 'faction-yellow', 'faction-green',
       'faction-red', 'faction-coral', 'faction-pink', 'faction-beige'
     ];
+    // 빨간색(5번), 다홍색(6번), 핑크색(7번) 카드는 기본적으로 영구적 적대 세력.
+    const PERMANENT_HOSTILE_FACTION_INDEXES = new Set([4, 5, 6]);
     let editingFactionIndex = null;
+
+    function isPermanentHostileFactionIndex(index) {
+      return PERMANENT_HOSTILE_FACTION_INDEXES.has(Number(index));
+    }
+
+    function ensureFactionData() {
+      if (!Array.isArray(appData.factions)) appData.factions = [];
+      while (appData.factions.length < 8) appData.factions.push({ name: "", race: "", goodwill: "" });
+      if (appData.factions.length > 8) appData.factions = appData.factions.slice(0, 8);
+      appData.factions = appData.factions.map((f, index) => ({
+        name: typeof f?.name === 'string' ? f.name : "",
+        race: typeof f?.race === 'string' ? f.race : "",
+        goodwill: isPermanentHostileFactionIndex(index) ? 'permanent_hostile' : (f?.goodwill ?? "")
+      }));
+    }
+
+    // 세력 기본값은 이름을 저장하지 않고, 인종과 우호도만 보존한다.
+    // 이 기능이 처음 적용되는 시점에는 현재 저장된 세력값을 기본 템플릿으로 자동 등록한다.
+    function ensureFactionDefaults() {
+      const hasValidDefaults = Array.isArray(appData.factionDefaults) && appData.factionDefaults.length === 8;
+
+      if (!hasValidDefaults) {
+        appData.factionDefaults = appData.factions.map((f, index) => ({
+          name: "",
+          race: typeof f?.race === 'string' ? f.race : "",
+          goodwill: isPermanentHostileFactionIndex(index) ? 'permanent_hostile' : (f?.goodwill ?? "")
+        }));
+      } else {
+        appData.factionDefaults = appData.factionDefaults.map((f, index) => ({
+          name: "",
+          race: typeof f?.race === 'string' ? f.race : "",
+          goodwill: isPermanentHostileFactionIndex(index) ? 'permanent_hostile' : (f?.goodwill ?? "")
+        }));
+      }
+    }
+
+    function createFactionsFromDefaults() {
+      ensureFactionDefaults();
+      return appData.factionDefaults.map((f, index) => ({
+        name: "",
+        race: f.race || "",
+        goodwill: isPermanentHostileFactionIndex(index) ? 'permanent_hostile' : (f.goodwill ?? "")
+      }));
+    }
+
+    function getFactionGoodwillDisplay(data, index) {
+      if (isPermanentHostileFactionIndex(index)) return '영구적 적대';
+      return data?.goodwill === '' ? '-' : String(data.goodwill);
+    }
+
+    function getFactionGoodwillClass(data, index) {
+      if (isPermanentHostileFactionIndex(index)) return 'goodwill-permanent';
+      if (data?.goodwill === '') return '';
+      const n = Number(data.goodwill);
+      return Number.isFinite(n) && n < 0 ? 'goodwill-negative' : 'goodwill-nonnegative';
+    }
 
     function escapeHtml(value) {
       return String(value ?? '')
@@ -1731,7 +1804,7 @@
             <div class="faction-card-editing">
               <input type="text" data-field="name" value="${escapeHtml(data.name)}" placeholder="세력 이름">
               <input type="text" data-field="race" value="${escapeHtml(data.race)}" placeholder="인종">
-              <input type="number" data-field="goodwill" value="${escapeHtml(data.goodwill)}" placeholder="우호도">
+              <input type="number" data-field="goodwill" value="${escapeHtml(isPermanentHostileFactionIndex(index) ? '' : data.goodwill)}" placeholder="${isPermanentHostileFactionIndex(index) ? '영구적 적대' : '우호도'}" ${isPermanentHostileFactionIndex(index) ? 'disabled' : ''}>
               <div class="faction-card-actions">
                 <button type="button" class="btn-secondary" onclick="cancelFactionEdit()">취소</button>
                 <button type="button" class="btn-primary" onclick="saveFactionEdit(${index})">저장</button>
@@ -1748,7 +1821,7 @@
             ${hasData ? `
               <div class="faction-card-meta">
                 <span class="faction-card-label">인종</span><span class="faction-card-value">${escapeHtml(data.race || '-')}</span>
-                <span class="faction-card-label">우호도</span><span class="faction-card-value">${escapeHtml(data.goodwill === '' ? '-' : data.goodwill)}</span>
+                <span class="faction-card-label">우호도</span><span class="faction-card-value ${getFactionGoodwillClass(data, index)}">${escapeHtml(getFactionGoodwillDisplay(data, index))}</span>
               </div>
             ` : `<div class="faction-card-empty">정보 없음</div>`}
           `;
@@ -1773,10 +1846,11 @@
       ensureFactionData();
       const card = document.querySelector(`#factionGrid .faction-card[data-faction-index="${index}"]`);
       if (!card) return;
+      const name = card.querySelector('[data-field="name"]')?.value.trim() || '';
       appData.factions[index] = {
-        name: card.querySelector('[data-field="name"]')?.value.trim() || '',
+        name,
         race: card.querySelector('[data-field="race"]')?.value.trim() || '',
-        goodwill: card.querySelector('[data-field="goodwill"]')?.value ?? ''
+        goodwill: isPermanentHostileFactionIndex(index) ? 'permanent_hostile' : (card.querySelector('[data-field="goodwill"]')?.value ?? '')
       };
       editingFactionIndex = null;
       saveData();
@@ -1802,6 +1876,7 @@
       if (typeof appData.colony.storyteller !== 'string') appData.colony.storyteller = "";
       if (typeof appData.colony.difficulty !== 'string') appData.colony.difficulty = "";
       ensureFactionData();
+      ensureFactionDefaults();
       if (!Array.isArray(appData.pawns)) appData.pawns = [];
       if (!Array.isArray(appData.logs)) appData.logs = [];
       if (!Array.isArray(appData.chronicle)) appData.chronicle = [];
@@ -1811,6 +1886,11 @@
         pawn.status = normalizePawnStatus(pawn.status);
         pawn.ageStage = normalizePawnAgeStage(pawn.ageStage, pawn.isChild === true);
       });
+
+      const relationshipsMigrated = syncActivePawnRelationships();
+      if (relationshipsMigrated) {
+        localStorage.setItem("rimworld_chronicle_data", JSON.stringify(appData));
+      }
 
       if (appData.currentLogDate) {
         if (appData.currentLogDate.season === "봄") appData.currentLogDate.season = "1분기";
@@ -1909,9 +1989,24 @@
       const step2 = confirm("🚨 마지막 확인: 복구 파일(JSON 백업)이 없다면 데이터를 되돌릴 수 없습니다.\n정말로 모든 데이터를 백지 상태로 만드시겠습니까?");
       if (!step2) return;
 
+      const preservedFactionDefaults = (() => {
+        ensureFactionData();
+        ensureFactionDefaults();
+        return appData.factionDefaults.map((f, index) => ({
+          name: "",
+          race: f.race || "",
+          goodwill: isPermanentHostileFactionIndex(index) ? 'permanent_hostile' : (f.goodwill ?? "")
+        }));
+      })();
+
       appData = {
         colony: { name: "", biome: "", dlcs: [], storyteller: "", difficulty: "" },
-        factions: Array.from({ length: 8 }, () => ({ name: "", race: "", goodwill: "" })),
+        factionDefaults: preservedFactionDefaults,
+        factions: preservedFactionDefaults.map((f, index) => ({
+          name: "",
+          race: f.race || "",
+          goodwill: isPermanentHostileFactionIndex(index) ? 'permanent_hostile' : (f.goodwill ?? "")
+        })),
         pawns: [],
         logs: [],
         chronicle: [],
@@ -2172,13 +2267,15 @@
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
           return parsed.map(item => ({
+            targetId: String(item?.targetId || '').trim(),
             target: String(item?.target || '').trim(),
-            content: String(item?.content || '').trim()
-          })).filter(item => item.target || item.content);
+            content: String(item?.content || '').trim(),
+            value: item?.value === '' || item?.value === null || item?.value === undefined ? '' : Math.max(-100, Math.min(100, Number(item.value) || 0))
+          })).filter(item => item.target || item.content || item.value !== '');
         }
       } catch (e) {}
       // 구버전의 단일 자유서술 텍스트 호환
-      return [{ target: '기존 기록', content: raw }];
+      return [{ targetId: '', target: '기존 기록', content: raw, value: '' }];
     }
 
     function getRelationships() {
@@ -2187,9 +2284,11 @@
 
     function setRelationships(items) {
       const cleaned = items.map(item => ({
+        targetId: String(item?.targetId || '').trim(),
         target: String(item?.target || '').trim(),
-        content: String(item?.content || '').trim()
-      })).filter(item => item.target || item.content);
+        content: String(item?.content || '').trim(),
+        value: item?.value === '' || item?.value === null || item?.value === undefined ? '' : Math.max(-100, Math.min(100, Number(item.value) || 0))
+      })).filter(item => item.target || item.content || item.value !== '');
       document.getElementById('pawnRelations').value = cleaned.length ? JSON.stringify(cleaned) : '';
       renderRelationships();
     }
@@ -2201,7 +2300,10 @@
       list.innerHTML = items.map((item, index) => `
         <span class="relationship-chip">
           <span class="relationship-chip-main">
-            <span class="relationship-chip-target">${escapeHtml(item.target || '대상 없음')}</span>
+            <span class="relationship-chip-target-row">
+              <span class="relationship-chip-target">${escapeHtml(item.target || '대상 없음')}</span>
+              ${item.value !== '' ? `<span class="relationship-chip-value ${Number(item.value) > 0 ? 'value-positive' : Number(item.value) < 0 ? 'value-negative' : 'value-zero'}">${Number(item.value) > 0 ? '+' : ''}${escapeHtml(String(item.value))}</span>` : ''}
+            </span>
             <span class="relationship-chip-content">${escapeHtml(item.content || '내용 없음')}</span>
           </span>
           <span class="relationship-chip-actions">
@@ -2215,9 +2317,11 @@
       relationshipEditingIndex = -1;
       const target = document.getElementById('pawnRelationTargetInput');
       const content = document.getElementById('pawnRelationContentInput');
+      const value = document.getElementById('pawnRelationValueInput');
       const btn = document.getElementById('pawnRelationAddBtn');
       if (target) target.value = '';
       if (content) content.value = '';
+      if (value) value.value = '';
       if (btn) btn.textContent = '추가';
     }
 
@@ -2229,16 +2333,19 @@
     function addOrUpdateRelationship() {
       const targetInput = document.getElementById('pawnRelationTargetInput');
       const contentInput = document.getElementById('pawnRelationContentInput');
-      if (!targetInput || !contentInput) return;
+      const valueInput = document.getElementById('pawnRelationValueInput');
+      if (!targetInput || !contentInput || !valueInput) return;
       const target = targetInput.value.trim();
       const content = contentInput.value.trim();
+      let value = valueInput.value.trim();
       if (!target || !content) return;
+      if (value !== '') value = Math.max(-100, Math.min(100, Number(value) || 0));
 
       const items = getRelationships();
       if (relationshipEditingIndex >= 0 && relationshipEditingIndex < items.length) {
-        items[relationshipEditingIndex] = { target, content };
+        items[relationshipEditingIndex] = { ...items[relationshipEditingIndex], target, content, value };
       } else {
-        items.push({ target, content });
+        items.push({ targetId: '', target, content, value });
       }
       setRelationships(items);
       resetRelationshipEditor();
@@ -2251,6 +2358,7 @@
       relationshipEditingIndex = index;
       document.getElementById('pawnRelationTargetInput').value = items[index].target || '';
       document.getElementById('pawnRelationContentInput').value = items[index].content || '';
+      document.getElementById('pawnRelationValueInput').value = items[index].value ?? '';
       document.getElementById('pawnRelationAddBtn').textContent = '수정 완료';
       document.getElementById('pawnRelationTargetInput').focus();
     }
@@ -2274,7 +2382,62 @@
 
     function formatRelationshipsForText(rawValue) {
       const items = parseRelationships(rawValue);
-      return items.map(item => `${item.target || '대상 없음'}: ${item.content || '내용 없음'}`).join(' / ');
+      return items.map(item => `${item.target || '대상 없음'}${item.value !== '' ? ` (${Number(item.value) > 0 ? '+' : ''}${item.value})` : ''}: ${item.content || '내용 없음'}`).join(' / ');
+    }
+
+    function getPawnRelationshipName(pawn) {
+      return String(pawn?.nick || [pawn?.first, pawn?.last].filter(Boolean).join(' ') || '이름 없음').trim();
+    }
+
+    function isActivePawnForRelationships(pawn) {
+      const status = normalizePawnStatus(pawn?.status);
+      return status === '생존' || status === '부상';
+    }
+
+    function makeDefaultRelationshipToPawn(targetPawn) {
+      return {
+        targetId: targetPawn?.id || '',
+        target: getPawnRelationshipName(targetPawn),
+        content: '관계 내용 없음',
+        value: 0
+      };
+    }
+
+    function ensureRelationshipToPawn(ownerPawn, targetPawn) {
+      if (!ownerPawn || !targetPawn || ownerPawn.id === targetPawn.id) return false;
+      const items = parseRelationships(ownerPawn.relations || '');
+      const targetName = getPawnRelationshipName(targetPawn);
+      let existing = items.find(item => item.targetId && item.targetId === targetPawn.id);
+      if (!existing) {
+        existing = items.find(item => !item.targetId && item.target === targetName);
+        if (existing) existing.targetId = targetPawn.id;
+      }
+      if (existing) {
+        // 자동 연결된 관계는 대상의 이름이 바뀌어도 현재 이름으로 따라간다.
+        if (existing.targetId === targetPawn.id && existing.target !== targetName) existing.target = targetName;
+        ownerPawn.relations = items.length ? JSON.stringify(items) : '';
+        return false;
+      }
+      items.push(makeDefaultRelationshipToPawn(targetPawn));
+      ownerPawn.relations = JSON.stringify(items);
+      return true;
+    }
+
+    function syncActivePawnRelationships() {
+      const activePawns = appData.pawns.filter(isActivePawnForRelationships);
+      let changed = false;
+      activePawns.forEach(owner => {
+        activePawns.forEach(target => {
+          if (owner.id !== target.id && ensureRelationshipToPawn(owner, target)) changed = true;
+        });
+      });
+      return changed;
+    }
+
+    function getDefaultRelationshipsForNewPawn() {
+      return appData.pawns
+        .filter(isActivePawnForRelationships)
+        .map(makeDefaultRelationshipToPawn);
     }
 
     function resetPawnForm() {
@@ -2297,7 +2460,8 @@
       loadEntryField('traits', '');
       loadEntryField('incapable', '');
       loadEntryField('health', '');
-      loadRelationships('');
+      setRelationships(getDefaultRelationshipsForNewPawn());
+      resetRelationshipEditor();
 
       renderSkillInputs({});
       renderBothPawnLists();
@@ -2379,6 +2543,7 @@
         skills: skills
       };
 
+      const isNewPawn = !selectedPawnId;
       if (selectedPawnId) {
         const idx = appData.pawns.findIndex(x => x.id === selectedPawnId);
         if (idx !== -1) appData.pawns[idx] = pawnObj;
@@ -2386,6 +2551,10 @@
         appData.pawns.push(pawnObj);
         selectedPawnId = pawnObj.id;
       }
+
+      // 생존/부상 정착민끼리는 서로 기본 관계 항목이 항상 존재하도록 동기화한다.
+      // 기존에 사용자가 작성한 관계는 덮어쓰지 않고, 빠진 관계만 추가한다.
+      syncActivePawnRelationships();
 
       saveData();
       renderBothPawnLists();
@@ -3264,7 +3433,8 @@
           text += `- 세력 ${index + 1}: 미입력\n`;
           return;
         }
-        text += `- 세력 ${index + 1}: ${f.name || '이름 미입력'} / 인종: ${f.race || '미입력'} / 우호도: ${f.goodwill === '' ? '미입력' : f.goodwill}\n`;
+        const goodwillText = isPermanentHostileFactionIndex(index) ? '영구적 적대' : (f.goodwill === '' ? '미입력' : f.goodwill);
+        text += `- 세력 ${index + 1}: ${f.name || '이름 미입력'} / 인종: ${f.race || '미입력'} / 우호도: ${goodwillText}\n`;
       });
 
       navigator.clipboard.writeText(text.trim()).then(() => {
