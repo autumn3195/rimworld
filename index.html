@@ -677,9 +677,57 @@
     .entry-chip-remove:hover {
       color: var(--danger);
     }
-    .health-entry-list .entry-chip {
-      border-radius: 6px;
+    /* 건강 / 신체 상태 등록·편집 */
+    .health-add-grid {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.75fr) minmax(240px, 1.7fr) auto;
+      gap: 6px;
+      align-items: center;
     }
+    .health-item-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 8px;
+    }
+    .health-item-list:empty { margin-top: 0; }
+    .health-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 100%;
+      padding: 6px 8px 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--bg-card);
+      font-size: 12px;
+      color: var(--text);
+    }
+    .health-chip-main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow-wrap: anywhere;
+    }
+    .health-chip-part { font-weight: 800; }
+    .health-chip-content { color: var(--text-muted); }
+    .health-chip-actions {
+      display: inline-flex;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+    .health-chip-action {
+      border: 0;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 1px 3px;
+      font-size: 12px;
+      line-height: 1;
+    }
+    .health-chip-action:hover { color: var(--accent); }
+    .health-chip-action.delete:hover { color: var(--danger); }
 
     /* 인간관계 & 사연 등록/편집 */
     .relationship-add-grid {
@@ -1394,12 +1442,13 @@
 
               <div>
                 <label>건강 / 신체 상태 (Health & Bionics)</label>
-                <div class="entry-add-row">
-                  <input type="text" id="pawnHealthInput" placeholder="예: 오른쪽 눈 상실(애꾸)" onkeydown="handleEntryKey(event, 'health')">
-                  <button type="button" class="btn-secondary entry-add-btn" onclick="addEntryItem('health')">추가</button>
+                <div class="health-add-grid">
+                  <input type="text" id="pawnHealthPartInput" placeholder="아픈 부위 / 신체 부위" onkeydown="handleHealthKey(event)">
+                  <input type="text" id="pawnHealthContentInput" placeholder="상태 내용 (예: 상실, 흉터, 의수)" onkeydown="handleHealthKey(event)">
+                  <button type="button" class="btn-secondary entry-add-btn" id="pawnHealthAddBtn" onclick="addOrUpdateHealth()">추가</button>
                 </div>
                 <input type="hidden" id="pawnHealth">
-                <div class="entry-item-list health-entry-list" id="pawnHealthList"></div>
+                <div class="health-item-list" id="pawnHealthList"></div>
               </div>
               <div>
                 <label>인간관계 & 사연 (Relationships)</label>
@@ -2174,8 +2223,7 @@
 
     const ENTRY_FIELD_CONFIG = {
       traits: { hiddenId: 'pawnTraits', inputId: 'pawnTraitsInput', listId: 'pawnTraitsList', separator: ', ' },
-      incapable: { hiddenId: 'pawnIncapable', inputId: 'pawnIncapableInput', listId: 'pawnIncapableList', separator: ', ' },
-      health: { hiddenId: 'pawnHealth', inputId: 'pawnHealthInput', listId: 'pawnHealthList', separator: '\n' }
+      incapable: { hiddenId: 'pawnIncapable', inputId: 'pawnIncapableInput', listId: 'pawnIncapableList', separator: ', ' }
     };
 
     function escapeHtml(value) {
@@ -2190,9 +2238,6 @@
     function parseEntryItems(type, rawValue) {
       const raw = String(rawValue || '').trim();
       if (!raw) return [];
-      if (type === 'health') {
-        return raw.split(/\n+/).map(v => v.trim()).filter(Boolean);
-      }
       return raw.split(',').map(v => v.trim()).filter(Boolean);
     }
 
@@ -2256,6 +2301,128 @@
       const cfg = ENTRY_FIELD_CONFIG[type];
       const input = document.getElementById(cfg.inputId);
       if (input) input.value = '';
+    }
+
+    let healthEditingIndex = -1;
+
+    function parseHealthItems(rawValue) {
+      const raw = String(rawValue || '').trim();
+      if (!raw) return [];
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          return parsed.map(item => ({
+            part: String(item?.part || '').trim(),
+            content: String(item?.content || '').trim()
+          })).filter(item => item.part || item.content);
+        }
+      } catch (e) {}
+      // 구버전 자유서술 건강 기록 호환: 각 줄을 기존 기록으로 보존
+      return raw.split(/\n+/).map(line => line.trim()).filter(Boolean).map(line => ({
+        part: '기존 기록',
+        content: line
+      }));
+    }
+
+    function getHealthItems() {
+      return parseHealthItems(document.getElementById('pawnHealth')?.value || '');
+    }
+
+    function setHealthItems(items) {
+      const cleaned = items.map(item => ({
+        part: String(item?.part || '').trim(),
+        content: String(item?.content || '').trim()
+      })).filter(item => item.part || item.content);
+      document.getElementById('pawnHealth').value = cleaned.length ? JSON.stringify(cleaned) : '';
+      renderHealthItems();
+    }
+
+    function renderHealthItems() {
+      const list = document.getElementById('pawnHealthList');
+      if (!list) return;
+      const items = getHealthItems();
+      list.innerHTML = items.map((item, index) => `
+        <span class="health-chip">
+          <span class="health-chip-main">
+            <span class="health-chip-part">${escapeHtml(item.part || '부위 없음')}</span>
+            <span class="health-chip-content">${escapeHtml(item.content || '내용 없음')}</span>
+          </span>
+          <span class="health-chip-actions">
+            <button type="button" class="health-chip-action" onclick="editHealthItem(${index})" title="편집">✏</button>
+            <button type="button" class="health-chip-action delete" onclick="removeHealthItem(${index})" title="삭제">×</button>
+          </span>
+        </span>`).join('');
+    }
+
+    function resetHealthEditor() {
+      healthEditingIndex = -1;
+      const part = document.getElementById('pawnHealthPartInput');
+      const content = document.getElementById('pawnHealthContentInput');
+      const btn = document.getElementById('pawnHealthAddBtn');
+      if (part) part.value = '';
+      if (content) content.value = '';
+      if (btn) btn.textContent = '추가';
+    }
+
+    function loadHealthItems(rawValue) {
+      setHealthItems(parseHealthItems(rawValue));
+      resetHealthEditor();
+    }
+
+    function addOrUpdateHealth() {
+      const partInput = document.getElementById('pawnHealthPartInput');
+      const contentInput = document.getElementById('pawnHealthContentInput');
+      if (!partInput || !contentInput) return;
+      const part = partInput.value.trim();
+      const content = contentInput.value.trim();
+      if (!part && !content) return;
+
+      const items = getHealthItems();
+      const next = { part, content };
+      if (healthEditingIndex >= 0 && healthEditingIndex < items.length) {
+        items[healthEditingIndex] = next;
+      } else {
+        items.push(next);
+      }
+      setHealthItems(items);
+      resetHealthEditor();
+      partInput.focus();
+    }
+
+    function editHealthItem(index) {
+      const items = getHealthItems();
+      const item = items[index];
+      if (!item) return;
+      healthEditingIndex = index;
+      document.getElementById('pawnHealthPartInput').value = item.part || '';
+      document.getElementById('pawnHealthContentInput').value = item.content || '';
+      document.getElementById('pawnHealthAddBtn').textContent = '수정 완료';
+      document.getElementById('pawnHealthPartInput').focus();
+    }
+
+    function removeHealthItem(index) {
+      const items = getHealthItems();
+      if (index < 0 || index >= items.length) return;
+      items.splice(index, 1);
+      setHealthItems(items);
+      if (healthEditingIndex === index) resetHealthEditor();
+      else if (healthEditingIndex > index) healthEditingIndex -= 1;
+    }
+
+    function handleHealthKey(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        addOrUpdateHealth();
+      }
+    }
+
+    function formatHealthForText(rawValue) {
+      const items = parseHealthItems(rawValue);
+      if (!items.length) return '';
+      return items.map(item => {
+        if (item.part && item.content) return `${item.part}: ${item.content}`;
+        return item.part || item.content;
+      }).filter(Boolean).join(' / ');
     }
 
     let relationshipEditingIndex = -1;
@@ -2459,7 +2626,7 @@
       document.getElementById('pawnAdulthood').value = "";
       loadEntryField('traits', '');
       loadEntryField('incapable', '');
-      loadEntryField('health', '');
+      loadHealthItems('');
       setRelationships(getDefaultRelationshipsForNewPawn());
       resetRelationshipEditor();
 
@@ -2489,7 +2656,7 @@
       document.getElementById('pawnAdulthood').value = p.adulthood || "";
       loadEntryField('traits', p.traits || '');
       loadEntryField('incapable', p.incapable || '');
-      loadEntryField('health', p.health || '');
+      loadHealthItems(p.health || '');
       loadRelationships(p.relations || '');
 
       renderSkillInputs(p.skills || {});
@@ -2718,7 +2885,7 @@
       text += `- 배경: 유년기 [${p.childhood || '불명'}] / 성년기 [${p.adulthood || '불명'}]\n`;
       text += `- 특성: ${p.traits || '없음'}\n`;
       if (p.incapable) text += `- 결격 사항: ${p.incapable}\n`;
-      if (p.health) text += `- 신체 상태: ${p.health}\n`;
+      if (p.health) text += `- 신체 상태: ${formatHealthForText(p.health)}\n`;
       if (p.relations) text += `- 인간관계: ${formatRelationshipsForText(p.relations)}\n`;
 
       text += `- 기술 스탯 (전체):\n`;
