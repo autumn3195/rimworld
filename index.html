@@ -1141,6 +1141,28 @@
     .chronicle-episode-item:hover,
     .chronicle-episode-item.selected { border-color: var(--accent); }
     .chronicle-episode-item.selected { background: rgba(88,166,255,0.08); }
+    .chronicle-character-group { display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
+    .chronicle-character-group-title {
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      padding:7px 8px; border-radius:6px; background:rgba(163,113,247,0.08);
+      border-left:3px solid #a371f7; color:#c9a7ff; font-size:12px; font-weight:800;
+    }
+    .chronicle-character-items { display:flex; flex-direction:column; gap:6px; }
+    .chronicle-character-items.collapsed { display:none; }
+    .chronicle-character-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 11px;
+      cursor: pointer;
+      font-size: 12.5px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .chronicle-character-item:hover,
+    .chronicle-character-item.selected { border-color: var(--accent); }
+    .chronicle-character-item.selected { background: rgba(88,166,255,0.08); }
+    .chronicle-character-textarea { min-height: 520px; resize: vertical; line-height: 1.65; }
     .chronicle-episode-no { font-size: 11px; color: var(--text-muted); margin-bottom: 3px; }
     .chronicle-episode-title { font-size: 12.5px; font-weight: 700; line-height: 1.35; }
     .chronicle-editor { display: flex; flex-direction: column; gap: 14px; }
@@ -1351,7 +1373,7 @@
             <div style="display: flex; gap: 8px;">
               <button class="btn-secondary" id="btnCopyPawn" onclick="copyCurrentPawnInfo()">📋 선택 림 복사</button>
               <button class="btn-danger" id="btnDeletePawn" style="display: none;" onclick="deleteCurrentPawn()">삭제</button>
-              <button class="btn-primary" onclick="savePawn()">정착민 저장</button>
+              <button class="btn-primary" onclick="savePawn()" title="자동 저장이 활성화되어 있습니다. 필요하면 수동 저장도 가능합니다.">저장</button>
             </div>
           </div>
 
@@ -1623,6 +1645,7 @@
       <div class="chronicle-layout">
         <aside class="chronicle-sidebar">
           <button class="btn-primary" style="width:100%; justify-content:center;" onclick="createBlankEpisode()">➕ 새 화 만들기</button>
+          <button class="btn-secondary" style="width:100%; justify-content:center;" onclick="createBlankCharacterIntro()">👤 새 캐릭터 소개</button>
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
             <span style="font-size:11.5px; color:var(--text-muted); font-weight:700;">📚 저장된 연대기</span>
             <span style="font-size:11px; color:var(--text-muted);"><span id="chronicleSidebarCount">0</span>화</span>
@@ -1631,6 +1654,29 @@
         </aside>
 
         <section class="chronicle-editor">
+          <div id="chronicleCharacterPanel" style="display:none; flex-direction:column; gap:14px;">
+            <div class="panel-box">
+              <div class="editor-section-title">
+                <span id="characterIntroEditorHeading">캐릭터 소개 편집</span>
+                <div style="display:flex; gap:8px;">
+                  <button class="btn-outline" onclick="copyCharacterIntro()">📋 복사</button>
+                  <button class="btn-danger" id="btnDeleteCharacterIntro" onclick="deleteCurrentCharacterIntro()">삭제</button>
+                  <button class="btn-primary" onclick="saveCharacterIntro()">소개 저장</button>
+                </div>
+              </div>
+              <input type="hidden" id="characterIntroId">
+              <div style="margin-top:12px;">
+                <label>소개 제목</label>
+                <input type="text" id="characterIntroTitle" placeholder="예: 키미">
+              </div>
+            </div>
+            <div class="panel-box">
+              <label>캐릭터 소개 본문</label>
+              <textarea id="chronicleCharacterIntro" class="chronicle-character-textarea" placeholder="이 캐릭터의 소개를 작성하세요."></textarea>
+            </div>
+          </div>
+
+          <div id="chronicleEpisodeEditor" style="display:flex; flex-direction:column; gap:14px;">
           <div class="panel-box">
             <div class="editor-section-title">
               <span id="chronicleEditorHeading">화 편집</span>
@@ -1677,6 +1723,7 @@
             <label>✍️ 소설 본문</label>
             <textarea id="chronicleNovelText" class="chronicle-novel-textarea" placeholder="ChatGPT로 작성한 소설 본문을 이곳에 붙여넣거나 직접 작성하세요."></textarea>
           </div>
+          </div>
         </section>
       </div>
     </div>
@@ -1703,12 +1750,15 @@
       logs: [],
       chronicle: [],
       chapterMeta: {},
+      characterIntroductions: [],
+      characterIntroMeta: { collapsed: false },
       currentLogDate: { year: 5500, season: "1분기", day: 1 }
     };
 
     let selectedPawnId = null;
     let editingLogId = null;
     let selectedChronicleEpisodeId = null;
+    let selectedCharacterIntroId = null;
     let chronicleDraftSourceLogs = [];
     const selectedLogIds = new Set();
 
@@ -1737,6 +1787,7 @@
       document.querySelectorAll('#pawnGenderSelector .age-stage-option').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.gender === gender);
       });
+      requestPawnAutoSave(50);
     }
 
     function selectPawnAgeStage(stage) {
@@ -1746,6 +1797,7 @@
       document.querySelectorAll('#pawnAgeStageSelector .age-stage-option').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.ageStage === stage);
       });
+      requestPawnAutoSave(50);
     }
 
     function selectPawnStatus(status) {
@@ -1754,6 +1806,7 @@
       document.querySelectorAll('#pawnStatusSelector .status-option').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.status === status);
       });
+      requestPawnAutoSave(50);
     }
 
     function getPawnStatusClass(status) {
@@ -1930,6 +1983,14 @@
       if (!Array.isArray(appData.logs)) appData.logs = [];
       if (!Array.isArray(appData.chronicle)) appData.chronicle = [];
       if (!appData.chapterMeta || typeof appData.chapterMeta !== 'object' || Array.isArray(appData.chapterMeta)) appData.chapterMeta = {};
+      if (!Array.isArray(appData.characterIntroductions)) appData.characterIntroductions = [];
+      if (!appData.characterIntroMeta || typeof appData.characterIntroMeta !== 'object' || Array.isArray(appData.characterIntroMeta)) appData.characterIntroMeta = { collapsed: false };
+      if (typeof appData.characterIntroMeta.collapsed !== 'boolean') appData.characterIntroMeta.collapsed = false;
+      if (typeof appData.characterIntro === 'string' && appData.characterIntro.trim() && appData.characterIntroductions.length === 0) {
+        const now = Date.now();
+        appData.characterIntroductions.push({ id: 'character_intro_' + now, title: '기존 캐릭터 소개', content: appData.characterIntro, createdAt: now, updatedAt: now });
+      }
+      delete appData.characterIntro;
 
       appData.pawns.forEach(pawn => {
         pawn.status = normalizePawnStatus(pawn.status);
@@ -1965,10 +2026,13 @@
         document.getElementById('logDay').value = appData.currentLogDate.day || 1;
       }
 
+      suppressPawnAutoSave = true;
       renderSkillInputs({});
       selectPawnStatus("생존");
       selectPawnAgeStage("성인");
       selectPawnGender("남성");
+      suppressPawnAutoSave = false;
+      bindPawnAutoSaveInputs();
       renderBothPawnLists();
       renderLogList();
       renderChronicleList();
@@ -2060,6 +2124,8 @@
         logs: [],
         chronicle: [],
         chapterMeta: {},
+        characterIntroductions: [],
+        characterIntroMeta: { collapsed: false },
         currentLogDate: { year: 5500, season: "1분기", day: 1 }
       };
       saveData();
@@ -2182,6 +2248,7 @@
       if (currentBar) currentBar.style.width = `${(displayCurrent / 20) * 100}%`;
       if (initialValue) initialValue.textContent = displayInitial;
       if (currentValue) currentValue.textContent = displayCurrent;
+      requestPawnAutoSave();
     }
 
     function toggleIncapable(stat) {
@@ -2199,6 +2266,7 @@
       initialInput.disabled = willDisable;
       currentInput.disabled = willDisable;
       updateSkillBars(stat);
+      requestPawnAutoSave(50);
     }
 
     function cyclePassion(stat) {
@@ -2219,6 +2287,7 @@
         btn.innerHTML = '🔥🔥';
         btn.style.color = '#ff5722';
       }
+      requestPawnAutoSave(50);
     }
 
     const ENTRY_FIELD_CONFIG = {
@@ -2280,6 +2349,7 @@
       setEntryItems(type, items);
       input.value = '';
       input.focus();
+      requestPawnAutoSave(50);
     }
 
     function removeEntryItem(type, index) {
@@ -2287,6 +2357,7 @@
       if (index < 0 || index >= items.length) return;
       items.splice(index, 1);
       setEntryItems(type, items);
+      requestPawnAutoSave(50);
     }
 
     function handleEntryKey(event, type) {
@@ -2387,6 +2458,7 @@
       setHealthItems(items);
       resetHealthEditor();
       partInput.focus();
+      requestPawnAutoSave(50);
     }
 
     function editHealthItem(index) {
@@ -2407,6 +2479,7 @@
       setHealthItems(items);
       if (healthEditingIndex === index) resetHealthEditor();
       else if (healthEditingIndex > index) healthEditingIndex -= 1;
+      requestPawnAutoSave(50);
     }
 
     function handleHealthKey(event) {
@@ -2517,6 +2590,7 @@
       setRelationships(items);
       resetRelationshipEditor();
       targetInput.focus();
+      requestPawnAutoSave(50);
     }
 
     function editRelationship(index) {
@@ -2536,6 +2610,7 @@
       items.splice(index, 1);
       setRelationships(items);
       resetRelationshipEditor();
+      requestPawnAutoSave(50);
     }
 
     function handleRelationshipKey(event) {
@@ -2607,7 +2682,134 @@
         .map(makeDefaultRelationshipToPawn);
     }
 
+    let pawnAutoSaveTimer = null;
+    let suppressPawnAutoSave = false;
+
+    function cancelPawnAutoSave() {
+      if (pawnAutoSaveTimer) {
+        clearTimeout(pawnAutoSaveTimer);
+        pawnAutoSaveTimer = null;
+      }
+    }
+
+    function requestPawnAutoSave(delay = 300) {
+      if (suppressPawnAutoSave) return;
+      cancelPawnAutoSave();
+      pawnAutoSaveTimer = setTimeout(() => {
+        pawnAutoSaveTimer = null;
+        autoSavePawn();
+      }, delay);
+    }
+
+    function collectPawnFormObject() {
+      const nick = document.getElementById('pawnNick').value.trim();
+      const first = document.getElementById('pawnFirst').value.trim();
+      const last = document.getElementById('pawnLast').value.trim();
+
+      const skills = {};
+      STAT_LIST.forEach(stat => {
+        const card = document.getElementById(`skill_card_${stat}`);
+        const isDisabled = card ? card.classList.contains('disabled') : false;
+        const initialInput = document.getElementById(`skill_initial_${stat}`);
+        const currentInput = document.getElementById(`skill_${stat}`);
+        const initialVal = Math.max(0, Math.min(20, parseInt(initialInput?.value) || 0));
+        const currentVal = Math.max(initialVal, Math.max(0, Math.min(20, parseInt(currentInput?.value) || 0)));
+        if (currentInput) {
+          currentInput.value = currentVal;
+          currentInput.min = initialVal;
+        }
+        const pBtn = document.getElementById(`passion_${stat}`);
+        const passion = parseInt(pBtn?.getAttribute('data-passion') || '0');
+        skills[stat] = { level: currentVal, levelInitial: initialVal, levelCurrent: currentVal, passion, disabled: isDisabled };
+      });
+
+      return {
+        id: selectedPawnId || 'pawn_' + Date.now(),
+        first,
+        nick,
+        last,
+        gender: normalizePawnGender(document.getElementById('pawnGender').value),
+        status: normalizePawnStatus(document.getElementById('pawnStatus').value),
+        ageBio: document.getElementById('pawnAgeBio').value,
+        ageChrono: document.getElementById('pawnAgeChrono').value,
+        ageStage: normalizePawnAgeStage(document.getElementById('pawnAgeStage').value),
+        race: document.getElementById('pawnRace').value,
+        childhood: document.getElementById('pawnChildhood').value,
+        adulthood: document.getElementById('pawnAdulthood').value,
+        traits: document.getElementById('pawnTraits').value,
+        incapable: document.getElementById('pawnIncapable').value,
+        health: document.getElementById('pawnHealth').value,
+        relations: document.getElementById('pawnRelations').value,
+        skills
+      };
+    }
+
+    function autoSavePawn() {
+      if (suppressPawnAutoSave) return;
+      const nick = document.getElementById('pawnNick').value.trim();
+      const first = document.getElementById('pawnFirst').value.trim();
+
+      // 완전히 빈 새 정착민은 자동으로 생성하지 않는다.
+      if (!selectedPawnId && !nick && !first) return;
+      // 기존 정착민을 편집하면서 이름을 잠깐 비우는 동안에는 이전 데이터를 유지한다.
+      if (selectedPawnId && !nick && !first) return;
+
+      const pawnObj = collectPawnFormObject();
+      const isNewPawn = !selectedPawnId;
+
+      if (selectedPawnId) {
+        const idx = appData.pawns.findIndex(x => x.id === selectedPawnId);
+        if (idx !== -1) appData.pawns[idx] = pawnObj;
+      } else {
+        appData.pawns.push(pawnObj);
+        selectedPawnId = pawnObj.id;
+        document.getElementById('pawnId').value = pawnObj.id;
+        document.getElementById('btnDeletePawn').style.display = 'inline-block';
+      }
+
+      syncActivePawnRelationships();
+      saveData();
+      renderBothPawnLists();
+      updateBadges();
+
+      const current = appData.pawns.find(x => x.id === selectedPawnId);
+      if (current) {
+        document.getElementById('editorFormHeading').innerText = `정착민 편집: ${current.nick || current.first}`;
+      }
+
+      // 새 정착민 생성 시 기존 정착민 쪽에 추가된 관계를 현재 편집 폼에도 반영한다.
+      if (isNewPawn && current) {
+        suppressPawnAutoSave = true;
+        loadRelationships(current.relations || '');
+        suppressPawnAutoSave = false;
+      }
+    }
+
+    function bindPawnAutoSaveInputs() {
+      const editor = document.querySelector('#tab-pawns .pawn-editor-body');
+      if (!editor) return;
+      const directIds = new Set([
+        'pawnFirst','pawnNick','pawnLast','pawnAgeBio','pawnAgeChrono','pawnRace','pawnChildhood','pawnAdulthood'
+      ]);
+      editor.addEventListener('input', (event) => {
+        const el = event.target;
+        if (!el || !el.id) return;
+        if (directIds.has(el.id) || el.id.startsWith('skill_initial_') || /^skill_[^_]/.test(el.id)) {
+          requestPawnAutoSave();
+        }
+      });
+      editor.addEventListener('change', (event) => {
+        const el = event.target;
+        if (!el || !el.id) return;
+        if (directIds.has(el.id) || el.id.startsWith('skill_initial_') || /^skill_[^_]/.test(el.id)) {
+          requestPawnAutoSave(50);
+        }
+      });
+    }
+
     function resetPawnForm() {
+      cancelPawnAutoSave();
+      suppressPawnAutoSave = true;
       selectedPawnId = null;
       document.getElementById('pawnId').value = "";
       document.getElementById('editorFormHeading').innerText = "새 정착민 추가";
@@ -2632,11 +2834,14 @@
 
       renderSkillInputs({});
       renderBothPawnLists();
+      suppressPawnAutoSave = false;
     }
 
     function editPawn(id, openTab1 = false) {
+      cancelPawnAutoSave();
+      suppressPawnAutoSave = true;
       const p = appData.pawns.find(x => x.id === id);
-      if (!p) return;
+      if (!p) { suppressPawnAutoSave = false; return; }
 
       selectedPawnId = id;
       document.getElementById('pawnId').value = p.id;
@@ -2665,6 +2870,7 @@
       if (openTab1) {
         switchTab('pawns');
       }
+      suppressPawnAutoSave = false;
     }
 
     function savePawn(notify = true) {
@@ -3289,6 +3495,9 @@
     }
 
     function createBlankEpisode() {
+      selectedCharacterIntroId = null;
+      document.getElementById('chronicleCharacterPanel').style.display = 'none';
+      document.getElementById('chronicleEpisodeEditor').style.display = 'flex';
       const pos = getNextEpisodePosition();
       selectedChronicleEpisodeId = null;
       chronicleDraftSourceLogs = [];
@@ -3314,6 +3523,9 @@
     }
 
     function loadChronicleEpisode(id) {
+      selectedCharacterIntroId = null;
+      document.getElementById('chronicleCharacterPanel').style.display = 'none';
+      document.getElementById('chronicleEpisodeEditor').style.display = 'flex';
       const ep = appData.chronicle.find(x => x.id === id);
       if (!ep) return;
       selectedChronicleEpisodeId = id;
@@ -3500,6 +3712,96 @@
       showToast('화가 삭제되었습니다.');
     }
 
+    function getCharacterIntroMeta() {
+      if (!appData.characterIntroMeta || typeof appData.characterIntroMeta !== 'object') appData.characterIntroMeta = { collapsed: false };
+      if (typeof appData.characterIntroMeta.collapsed !== 'boolean') appData.characterIntroMeta.collapsed = false;
+      return appData.characterIntroMeta;
+    }
+
+    function toggleCharacterIntroGroup() {
+      const meta = getCharacterIntroMeta();
+      meta.collapsed = !meta.collapsed;
+      saveData();
+      renderChronicleList();
+    }
+
+    function createBlankCharacterIntro() {
+      selectedChronicleEpisodeId = null;
+      selectedCharacterIntroId = null;
+      document.getElementById('chronicleEpisodeEditor').style.display = 'none';
+      document.getElementById('chronicleCharacterPanel').style.display = 'flex';
+      document.getElementById('characterIntroId').value = '';
+      document.getElementById('characterIntroTitle').value = '';
+      document.getElementById('chronicleCharacterIntro').value = '';
+      document.getElementById('characterIntroEditorHeading').innerText = '새 캐릭터 소개 작성';
+      document.getElementById('btnDeleteCharacterIntro').style.display = 'none';
+      renderChronicleList();
+    }
+
+    function loadCharacterIntro(id) {
+      const item = (appData.characterIntroductions || []).find(x => x.id === id);
+      if (!item) return;
+      selectedChronicleEpisodeId = null;
+      selectedCharacterIntroId = id;
+      document.getElementById('chronicleEpisodeEditor').style.display = 'none';
+      document.getElementById('chronicleCharacterPanel').style.display = 'flex';
+      document.getElementById('characterIntroId').value = item.id;
+      document.getElementById('characterIntroTitle').value = item.title || '';
+      document.getElementById('chronicleCharacterIntro').value = item.content || '';
+      document.getElementById('characterIntroEditorHeading').innerText = `${item.title || '제목 없음'} 편집`;
+      document.getElementById('btnDeleteCharacterIntro').style.display = '';
+      renderChronicleList();
+    }
+
+    function saveCharacterIntro() {
+      const id = document.getElementById('characterIntroId').value;
+      const title = document.getElementById('characterIntroTitle').value.trim();
+      const content = document.getElementById('chronicleCharacterIntro').value;
+      if (!title) { alert('캐릭터 소개 제목을 입력해주세요.'); return; }
+      if (id) {
+        const item = appData.characterIntroductions.find(x => x.id === id);
+        if (!item) return;
+        item.title = title;
+        item.content = content;
+        item.updatedAt = Date.now();
+        selectedCharacterIntroId = item.id;
+      } else {
+        const now = Date.now();
+        const item = { id: 'character_intro_' + now, title, content, createdAt: now, updatedAt: now };
+        appData.characterIntroductions.push(item);
+        selectedCharacterIntroId = item.id;
+        document.getElementById('characterIntroId').value = item.id;
+        document.getElementById('btnDeleteCharacterIntro').style.display = '';
+      }
+      saveData();
+      document.getElementById('characterIntroEditorHeading').innerText = `${title} 편집`;
+      renderChronicleList();
+      showToast('캐릭터 소개를 저장했습니다.');
+    }
+
+    function deleteCurrentCharacterIntro() {
+      const id = document.getElementById('characterIntroId').value;
+      if (!id) return;
+      const item = appData.characterIntroductions.find(x => x.id === id);
+      if (!item) return;
+      if (!confirm(`캐릭터 소개 "${item.title || '제목 없음'}"을 삭제하시겠습니까?`)) return;
+      appData.characterIntroductions = appData.characterIntroductions.filter(x => x.id !== id);
+      selectedCharacterIntroId = null;
+      saveData();
+      renderChronicleList();
+      if (appData.characterIntroductions.length) loadCharacterIntro(appData.characterIntroductions[0].id);
+      else createBlankCharacterIntro();
+      showToast('캐릭터 소개를 삭제했습니다.');
+    }
+
+    function copyCharacterIntro() {
+      const title = document.getElementById('characterIntroTitle').value.trim();
+      const content = document.getElementById('chronicleCharacterIntro').value.trim();
+      if (!title && !content) { alert('복사할 캐릭터 소개가 없습니다.'); return; }
+      const text = title ? `### ${title}\n${content}`.trim() : content;
+      navigator.clipboard.writeText(text).then(() => showToast('캐릭터 소개를 복사했습니다.'));
+    }
+
     function getChapterMeta(chapter) {
       const key = String(Number(chapter) || 1);
       if (!appData.chapterMeta) appData.chapterMeta = {};
@@ -3532,8 +3834,27 @@
       const count = document.getElementById('chronicleSidebarCount');
       if (!container || !count) return;
       count.innerText = appData.chronicle.length;
+      const charMeta = getCharacterIntroMeta();
+      const charItems = [...(appData.characterIntroductions || [])].sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
+      const characterGroup = `
+        <div class="chronicle-character-group">
+          <div class="chronicle-character-group-title">
+            <span>👥 캐릭터 소개</span>
+            <div class="chronicle-chapter-actions">
+              <button type="button" class="chronicle-chapter-action" onclick="event.stopPropagation(); createBlankCharacterIntro()">＋ 추가</button>
+              <button type="button" class="chronicle-chapter-action" onclick="event.stopPropagation(); toggleCharacterIntroGroup()">${charMeta.collapsed ? '▼ 펼치기' : '▲ 접기'}</button>
+            </div>
+          </div>
+          <div class="chronicle-character-items ${charMeta.collapsed ? 'collapsed' : ''}">
+            ${charItems.length ? charItems.map(item => `
+              <div class="chronicle-character-item ${item.id === selectedCharacterIntroId ? 'selected' : ''}" onclick="loadCharacterIntro('${item.id}')">
+                <div class="chronicle-episode-title">${escapeHtml(item.title || '제목 없음')}</div>
+              </div>
+            `).join('') : '<div class="chronicle-empty">저장된 캐릭터 소개가 없습니다.</div>'}
+          </div>
+        </div>`;
       if (!appData.chronicle.length) {
-        container.innerHTML = '<div class="chronicle-empty">아직 저장된 화가 없습니다.<br>일지에서 로그를 선택해 새 화로 저장해보세요.</div>';
+        container.innerHTML = characterGroup + '<div class="chronicle-empty">아직 저장된 화가 없습니다.<br>일지에서 로그를 선택해 새 화로 저장해보세요.</div>';
         return;
       }
       const sorted = [...appData.chronicle].sort((a,b) => (Number(a.chapter)-Number(b.chapter)) || (Number(a.episode)-Number(b.episode)) || ((a.createdAt||0)-(b.createdAt||0)));
@@ -3543,7 +3864,7 @@
         if (!groups[ch]) groups[ch] = [];
         groups[ch].push(ep);
       });
-      container.innerHTML = Object.keys(groups).sort((a,b)=>Number(a)-Number(b)).map(ch => {
+      container.innerHTML = characterGroup + Object.keys(groups).sort((a,b)=>Number(a)-Number(b)).map(ch => {
         const meta = getChapterMeta(ch);
         const chapterName = meta.name ? ` · ${escapeHtml(meta.name)}` : '';
         return `
